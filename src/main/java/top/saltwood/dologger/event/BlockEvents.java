@@ -18,6 +18,7 @@ import top.saltwood.dologger.model.action.BlockAction;
 import top.saltwood.dologger.model.action.ItemAction;
 import top.saltwood.dologger.model.history.IHistory;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
+import top.saltwood.dologger.util.LanguageResolver;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,10 +45,10 @@ public class BlockEvents {
 
         if (inspecting) {
             inspectingPlayers.add(player.getUUID());
-            player.sendSystemMessage(Component.literal("DoLogger inspect enabled").withStyle(ChatFormatting.GREEN));
+            player.sendSystemMessage(LanguageResolver.component("dologger.commands.inspect.enabled").withStyle(ChatFormatting.GREEN));
         } else {
             inspectingPlayers.remove(player.getUUID());
-            player.sendSystemMessage(Component.literal("DoLogger inspect disabled").withStyle(ChatFormatting.RED));
+            player.sendSystemMessage(LanguageResolver.component("dologger.commands.inspect.disabled").withStyle(ChatFormatting.RED));
         }
     }
 
@@ -174,7 +175,7 @@ public class BlockEvents {
         }
 
         if (history.isEmpty()) {
-            player.sendSystemMessage(Component.literal("No history found for this block.").withStyle(ChatFormatting.GRAY));
+            player.sendSystemMessage(LanguageResolver.component("dologger.commands.inspect.no_history").withStyle(ChatFormatting.GRAY));
             return;
         }
 

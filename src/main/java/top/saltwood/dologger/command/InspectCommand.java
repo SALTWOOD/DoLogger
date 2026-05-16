@@ -9,6 +9,7 @@ import top.saltwood.dologger.Dologger;
 import top.saltwood.dologger.database.service.DatabaseStatus;
 import top.saltwood.dologger.permission.Permissions;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
+import top.saltwood.dologger.util.LanguageResolver;
 
 public final class InspectCommand {
 
@@ -21,7 +22,7 @@ public final class InspectCommand {
 
     private static int execute(CommandSourceStack source) {
         if (!Permissions.canInspect(source)) {
-            source.sendFailure(Component.translatable("dologger.commands.error.permission"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.permission"));
             return 0;
         }
         if (!isDatabaseAvailable()) {
@@ -30,17 +31,17 @@ public final class InspectCommand {
         }
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            source.sendFailure(Component.translatable("dologger.commands.error.players_only"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.players_only"));
             return 0;
         }
         if (!(player instanceof DoLoggerServerPlayer doLoggerPlayer)) {
-            source.sendFailure(Component.translatable("dologger.commands.error.player_state_unavailable"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.player_state_unavailable"));
             return 0;
         }
 
         boolean inspecting = !doLoggerPlayer.dologger$isInspecting();
         doLoggerPlayer.dologger$setInspecting(inspecting);
-        player.sendSystemMessage(Component.translatable(inspecting ? "dologger.commands.inspect.enabled" : "dologger.commands.inspect.disabled"));
+        player.sendSystemMessage(LanguageResolver.component(inspecting ? "dologger.commands.inspect.enabled" : "dologger.commands.inspect.disabled"));
         return 1;
     }
 

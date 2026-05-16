@@ -16,6 +16,7 @@ import top.saltwood.dologger.database.service.Services;
 import top.saltwood.dologger.model.history.IHistory;
 import top.saltwood.dologger.permission.Permissions;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
+import top.saltwood.dologger.util.LanguageResolver;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,12 +31,13 @@ public final class LookupCommand {
         return Commands.literal("lookup")
                 .executes(context -> execute(context.getSource(), ""))
                 .then(Commands.argument("filters", StringArgumentType.greedyString())
+                        .suggests(LookupSuggestions.FILTERS)
                         .executes(context -> execute(context.getSource(), StringArgumentType.getString(context, "filters"))));
     }
 
     private static int execute(CommandSourceStack source, String filters) {
         if (!Permissions.canLookup(source)) {
-            source.sendFailure(Component.translatable("dologger.commands.error.permission"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.permission"));
             return 0;
         }
         Services services = Dologger.getServices();
@@ -45,11 +47,11 @@ public final class LookupCommand {
         }
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            source.sendFailure(Component.translatable("dologger.commands.error.players_only"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.players_only"));
             return 0;
         }
         if (!(player instanceof DoLoggerServerPlayer doLoggerPlayer)) {
-            source.sendFailure(Component.translatable("dologger.commands.error.player_state_unavailable"));
+            source.sendFailure(LanguageResolver.component("dologger.commands.error.player_state_unavailable"));
             return 0;
         }
 
@@ -57,7 +59,7 @@ public final class LookupCommand {
         try {
             filterList = FilterParser.parse(filters, player.blockPosition());
         } catch (FilterParseException exception) {
-            source.sendFailure(Component.translatable("dologger.commands.lookup.parse_error", exception.getMessage()));
+            source.sendFailure(LanguageResolver.component("dologger.commands.lookup.parse_error", exception.getMessage()));
             return 0;
         }
 
@@ -71,7 +73,7 @@ public final class LookupCommand {
 
         if (history.isEmpty()) {
             doLoggerPlayer.dologger$setPages(List.of());
-            source.sendSuccess(() -> Component.translatable("dologger.commands.lookup.no_results"), false);
+            source.sendSuccess(() -> LanguageResolver.component("dologger.commands.lookup.no_results"), false);
             return 1;
         }
 

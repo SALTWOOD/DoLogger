@@ -3,11 +3,11 @@ package top.saltwood.dologger.database.service;
 import net.minecraft.network.chat.Component;
 import top.saltwood.dologger.Dologger;
 import top.saltwood.dologger.database.DatabaseManager;
+import top.saltwood.dologger.util.LanguageResolver;
 
 public final class DatabaseStatus {
 
     private static final String UNAVAILABLE_TRANSLATION_KEY = "dologger.database.unavailable";
-    private static final String UNAVAILABLE_TEXT = "DoLogger database is unavailable; logging and lookup commands are disabled.";
 
     private DatabaseStatus() {
     }
@@ -18,10 +18,10 @@ public final class DatabaseStatus {
     }
 
     public static Component unavailableComponent() {
-        return Component.translatableWithFallback(UNAVAILABLE_TRANSLATION_KEY, UNAVAILABLE_TEXT);
+        return LanguageResolver.component(UNAVAILABLE_TRANSLATION_KEY);
     }
 
     public static String unavailableMessage() {
-        return UNAVAILABLE_TEXT;
+        return LanguageResolver.resolve(UNAVAILABLE_TRANSLATION_KEY);
     }
 }
