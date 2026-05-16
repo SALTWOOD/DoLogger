@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import top.saltwood.dologger.Config;
 import top.saltwood.dologger.Dologger;
 import top.saltwood.dologger.command.filter.FilterList;
 import top.saltwood.dologger.command.filter.FilterParseException;
@@ -21,8 +22,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class LookupCommand {
-
-    static final int PAGE_SIZE = 10;
 
     private LookupCommand() {
     }
@@ -84,8 +83,8 @@ public final class LookupCommand {
 
     private static List<List<IHistory>> paginate(List<IHistory> history) {
         List<List<IHistory>> pages = new ArrayList<>();
-        for (int index = 0; index < history.size(); index += PAGE_SIZE) {
-            pages.add(List.copyOf(history.subList(index, Math.min(index + PAGE_SIZE, history.size()))));
+        for (int index = 0; index < history.size(); index += Config.pageSize) {
+            pages.add(List.copyOf(history.subList(index, Math.min(index + Config.pageSize, history.size()))));
         }
         return List.copyOf(pages);
     }

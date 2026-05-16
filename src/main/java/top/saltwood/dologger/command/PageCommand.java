@@ -4,8 +4,12 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.ChatFormatting;
 import top.saltwood.dologger.model.history.IHistory;
 import top.saltwood.dologger.permission.Permissions;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
@@ -53,10 +57,34 @@ public final class PageCommand {
     }
 
     static void displayPage(CommandSourceStack source, List<List<IHistory>> pages, int pageNumber) {
-        source.sendSuccess(() -> Component.translatable("dologger.commands.lookup.header", pageNumber, pages.size()), false);
+        int totalPages = pages.size();
+
+        source.sendSuccess(() -> Component.translatable("dologger.commands.lookup.header", pageNumber, totalPages), false);
         for (IHistory entry : pages.get(pageNumber - 1)) {
             source.sendSuccess(entry::getComponent, false);
         }
-        source.sendSuccess(() -> Component.translatable("dologger.commands.lookup.footer", pageNumber, pages.size()), false);
+
+        MutableComponent footer = Component.empty();
+        if (pageNumber > 1) {
+            footer.append(Component.translatable("dologger.commands.page.prev")
+                    .withStyle(Style.EMPTY
+                            .withColor(ChatFormatting.GRAY)
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/gl page " + (pageNumber - 1)))));
+        } else {
+            footer.append(Component.translatable("dologger.commands.page.prev").withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        footer.append(Component.translatable("dologger.commands.page.info", pageNumber, totalPages).withStyle(ChatFormatting.GRAY));
+
+        if (pageNumber < totalPages) {
+            footer.append(Component.translatable("dologger.commands.page.next")
+                    .withStyle(Style.EMPTY
+                            .withColor(ChatFormatting.GRAY)
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/gl page " + (pageNumber + 1)))));
+        } else {
+            footer.append(Component.translatable("dologger.commands.page.next").withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        source.sendSuccess(() -> footer, false);
     }
 }
