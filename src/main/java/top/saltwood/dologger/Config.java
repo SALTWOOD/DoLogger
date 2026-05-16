@@ -13,6 +13,10 @@ public class Config {
             .comment("Whether DoLogger logging is enabled")
             .define("enabled", true);
 
+    public static final ModConfigSpec.ConfigValue<String> LANGUAGE = BUILDER
+            .comment("Language file used by the server for DoLogger messages, from assets/dologger/lang/<language>.json")
+            .define("language", "en_us");
+
     public static final ModConfigSpec.ConfigValue<String> HOST = BUILDER
             .comment("PostgreSQL host address")
             .define("host", "localhost");
@@ -64,6 +68,7 @@ public class Config {
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
+    public static String language;
     public static String host;
     public static int port;
     public static String database;
@@ -80,6 +85,7 @@ public class Config {
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         enabled = ENABLED.get();
+        language = LANGUAGE.get();
         host = HOST.get();
         port = PORT.get();
         database = DATABASE.get();
