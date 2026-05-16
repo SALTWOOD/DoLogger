@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
 import top.saltwood.dologger.database.DatabaseManager;
 import top.saltwood.dologger.database.SqlQueue;
+import top.saltwood.dologger.database.service.Services;
 
 @Mod(Dologger.MODID)
 public class Dologger
@@ -21,6 +22,7 @@ public class Dologger
     private static final Logger LOGGER = LogUtils.getLogger();
     private static DatabaseManager databaseManager;
     private static SqlQueue sqlQueue;
+    private static Services services;
 
     public Dologger(IEventBus modEventBus, ModContainer modContainer)
     {
@@ -44,6 +46,7 @@ public class Dologger
         if (databaseManager.isAvailable()) {
             sqlQueue = new SqlQueue(databaseManager);
             sqlQueue.start();
+            services = new Services();
         }
     }
 
@@ -54,6 +57,8 @@ public class Dologger
             sqlQueue.shutdown();
             sqlQueue = null;
         }
+
+        services = null;
 
         if (databaseManager != null) {
             databaseManager.stop();
@@ -69,5 +74,10 @@ public class Dologger
     public static SqlQueue getSqlQueue()
     {
         return sqlQueue;
+    }
+
+    public static Services getServices()
+    {
+        return services;
     }
 }
