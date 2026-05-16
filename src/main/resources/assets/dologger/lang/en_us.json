@@ -13,5 +13,34 @@
   "dologger.commands.page.next": " [Next >]",
   "dologger.commands.page.info": " Page %s/%s ",
   "dologger.commands.page.out_of_bounds": "Page %s is out of bounds. Choose a page between 1 and %s.",
-  "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled."
+  "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled.",
+
+  "dologger.time.unit.minute": "minute",
+  "dologger.time.unit.hour": "hour",
+  "dologger.time.unit.day": "day",
+  "dologger.time.unit.year": "year",
+  "dologger.time.divider": " ago (",
+
+  "dologger.lookup.position": "[%s, %s, %s]",
+  "dologger.lookup.position.teleport": "Click to teleport",
+  "dologger.lookup.time.ago": "%s %s%s ago",
+
+  "dologger.action.break_block.past": "broken",
+  "dologger.action.place_block.past": "placed",
+  "dologger.action.interact_block.past": "interacted with",
+  "dologger.action.kill_entity.past": "killed",
+  "dologger.action.interact_entity.past": "interacted with",
+  "dologger.action.remove_item.past": "removed",
+  "dologger.action.add_item.past": "added",
+  "dologger.action.drop_item.past": "dropped",
+  "dologger.action.pickup_item.past": "picked up",
+  "dologger.action.craft_item.past": "crafted",
+  "dologger.action.break_item.past": "broke",
+  "dologger.action.consume_item.past": "consumed",
+  "dologger.action.throw_item.past": "threw",
+  "dologger.action.shoot_item.past": "shot",
+  "dologger.action.add_item_ender.past": "added to ender chest",
+  "dologger.action.remove_item_ender.past": "removed from ender chest",
+  "dologger.action.join.past": "joined",
+  "dologger.action.quit.past": "left"
 }
