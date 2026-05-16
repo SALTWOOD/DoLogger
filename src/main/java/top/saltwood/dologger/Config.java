@@ -65,6 +65,10 @@ public class Config {
             .comment("Maximum number of entries per lookup page")
             .defineInRange("pageSize", 10, 1, 100);
 
+    public static final ModConfigSpec.IntValue PURGE_RETENTION_DAYS = BUILDER
+            .comment("Automatically delete history older than this many days on database startup; 0 disables purge")
+            .defineInRange("purgeRetentionDays", 0, 0, 36500);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
@@ -81,6 +85,7 @@ public class Config {
     public static int maxLifetime;
     public static int queueFlushTimeout;
     public static int pageSize;
+    public static int purgeRetentionDays;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -102,6 +107,7 @@ public class Config {
         maxLifetime = MAX_LIFETIME.get();
         queueFlushTimeout = QUEUE_FLUSH_TIMEOUT.get();
         pageSize = PAGE_SIZE.get();
+        purgeRetentionDays = PURGE_RETENTION_DAYS.get();
     }
 
     public static void reload() {

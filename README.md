@@ -65,6 +65,7 @@ Main config keys in `config/dologger-common.toml`:
 | `maxLifetime` | `1800000` | HikariCP max lifetime in milliseconds. |
 | `queueFlushTimeout` | `10000` | Maximum queue flush time during server stop, in milliseconds. |
 | `pageSize` | `10` | Number of lookup entries per page. |
+| `purgeRetentionDays` | `0` | Deletes history older than this many days on database startup. `0` disables automatic purge. |
 
 Use `/dologger reload` after changing reloadable config values. NeoForge handles file watching for config files; the command clears DoLogger's config cache and reloads the server-side language table from the currently loaded config.
 
@@ -120,6 +121,19 @@ Example:
 
 ```text
 /dologger reload
+```
+
+### `/dologger purge [days]`
+
+Deletes history rows older than the selected number of days. Without `days`, this uses `purgeRetentionDays` from the config. A value of `0` disables purge and does not delete rows.
+
+Permission node: `dologger.purge`
+
+Examples:
+
+```text
+/dologger purge
+/dologger purge 30
 ```
 
 All permission checks currently fall back to Minecraft permission level 2.
