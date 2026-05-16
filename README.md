@@ -138,14 +138,14 @@ Examples:
 
 ### `/dologger revert preview <filters>` / `confirm` / `cancel`
 
-Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it; cancel clears it.
+Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it newest-to-oldest across all matched eligible rows; cancel clears it. Successfully reverted source rows are marked as reverted in the database, and inverse audit rows are linked back to the source rows.
 
 Permission node: `dologger.revert`
 
 Safety limits:
 
 - Block-only MVP: no container, item, session, entity, chat, or command revert.
-- Preview is capped to `pageSize` changes and runs oldest-first.
+- Preview includes all matched eligible block changes and confirm runs newest-first.
 - Reverting a place removes the block only if the current block still matches the logged material.
 - Reverting a break restores only default block state, only into air, and skips block-entity blocks such as chests or signs.
 
@@ -156,6 +156,29 @@ Examples:
 /dologger revert preview action.break_block include.stone radius.b
 /dologger revert confirm
 /dologger revert cancel
+```
+
+### `/dologger restore preview <filters>` / `confirm` / `cancel`
+
+Previews and safely restores currently reverted block break/place history. Restore requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview only includes source rows that are reverted and not already restored; confirm executes oldest-to-newest across all matched eligible rows and marks successful source rows as restored. Command-generated audit rows are linked back to the original source rows and are not themselves selected for revert/restore.
+
+Permission node: `dologger.restore`
+
+Safety limits:
+
+- Block-only MVP: no container, item, session, entity, chat, or command restore.
+- Preview includes all matched currently reverted block changes and confirm runs oldest-first.
+- Restoring an original place places the logged material back only into air.
+- Restoring an original break removes the block only if the current block still matches the logged material.
+- Restore conflicts instead of overwriting mismatched blocks.
+
+Examples:
+
+```text
+/dologger restore preview action.place_block user.SaltWood_233 radius.10 time.1h
+/dologger restore preview action.break_block include.stone radius.b
+/dologger restore confirm
+/dologger restore cancel
 ```
 
 All permission checks currently fall back to Minecraft permission level 2.
