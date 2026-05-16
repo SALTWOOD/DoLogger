@@ -41,6 +41,7 @@ public class DatabaseManager {
             if (isConnectionHealthy()) {
                 try (Connection connection = dataSource.getConnection()) {
                     SchemaCreator.createSchema(connection);
+                    HistoryPurger.purgeOlderThan(connection, Config.purgeRetentionDays);
                     available = true;
                     LOGGER.info("DoLogger: Connected to PostgreSQL at {}:{}/{}", Config.host, Config.port, Config.database);
                 }
