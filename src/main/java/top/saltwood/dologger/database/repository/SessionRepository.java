@@ -24,13 +24,13 @@ public class SessionRepository {
             JOIN users u ON s.user_id = u.id
             JOIN levels l ON s.level = l.id
             WHERE l.name = ?
-            AND (? IS NULL OR u.name = ANY(?) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?)))
-            AND (? IS NULL OR s.time >= ?)
-            AND (? IS NULL OR s.time <= ?)
-            AND (? IS NULL OR s.x BETWEEN ? AND ?)
-            AND (? IS NULL OR s.y BETWEEN ? AND ?)
-            AND (? IS NULL OR s.z BETWEEN ? AND ?)
-            AND (? IS NULL OR s.action = ANY(?))
+            AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
+            AND (? OR s.time >= ?)
+            AND (? OR s.time <= ?)
+            AND (? OR s.x BETWEEN ? AND ?)
+            AND (? OR s.y BETWEEN ? AND ?)
+            AND (? OR s.z BETWEEN ? AND ?)
+            AND (? OR s.action = ANY(?::integer[]))
             ORDER BY s.time DESC LIMIT 1000
             """;
 
