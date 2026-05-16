@@ -17,6 +17,7 @@ import top.saltwood.dologger.database.service.Services;
 import top.saltwood.dologger.model.action.BlockAction;
 import top.saltwood.dologger.model.action.ItemAction;
 import top.saltwood.dologger.model.history.IHistory;
+import top.saltwood.dologger.player.DoLoggerServerPlayer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,16 +31,28 @@ public class BlockEvents {
     private static final Set<UUID> inspectingPlayers = new HashSet<>();
 
     public static boolean isInspecting(ServerPlayer player) {
-        return inspectingPlayers.contains(player.getUUID());
+        return player instanceof DoLoggerServerPlayer doLoggerPlayer
+                ? doLoggerPlayer.dologger$isInspecting()
+                : inspectingPlayers.contains(player.getUUID());
     }
 
     public static void toggleInspect(ServerPlayer player) {
-        if (!inspectingPlayers.remove(player.getUUID())) {
+        boolean inspecting = !isInspecting(player);
+        if (player instanceof DoLoggerServerPlayer doLoggerPlayer) {
+            doLoggerPlayer.dologger$setInspecting(inspecting);
+        }
+
+        if (inspecting) {
             inspectingPlayers.add(player.getUUID());
             player.sendSystemMessage(Component.literal("DoLogger inspect enabled").withStyle(ChatFormatting.GREEN));
         } else {
+            inspectingPlayers.remove(player.getUUID());
             player.sendSystemMessage(Component.literal("DoLogger inspect disabled").withStyle(ChatFormatting.RED));
         }
+    }
+
+    public static BlockPos chestPartnerPosition(Level level, BlockPos pos) {
+        return BlockHandler.getChestPartnerPosition(level, pos, level.getBlockState(pos));
     }
 
     @SubscribeEvent

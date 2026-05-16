@@ -4,6 +4,7 @@
   "package": "top.saltwood.dologger.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ServerPlayerMixin"
   ],
   "client": [
   ],
