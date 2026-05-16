@@ -87,7 +87,7 @@ public class BlockRepository {
             WHERE l.name = ?
             AND b.action IN (0, 1)
             AND b.command_generated = false
-            AND b.reverted_at IS NULL
+            AND (b.reverted_at IS NULL OR b.restored_at IS NOT NULL)
             AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
             AND (? OR b.time >= ?)
             AND (? OR b.time <= ?)
@@ -123,12 +123,12 @@ public class BlockRepository {
             """;
     private static final String MARK_REVERTED = """
             UPDATE blocks
-            SET reverted_at = ?, reverted_by = (SELECT id FROM users WHERE uuid = ?), revert_batch = ?
-            WHERE id = ? AND command_generated = false AND reverted_at IS NULL
+            SET reverted_at = ?, reverted_by = (SELECT id FROM users WHERE uuid = ?), revert_batch = ?, restored_at = NULL
+            WHERE id = ? AND command_generated = false AND (reverted_at IS NULL OR restored_at IS NOT NULL)
             """;
     private static final String MARK_RESTORED = """
             UPDATE blocks
-            SET restored_at = ?, restored_by = (SELECT id FROM users WHERE uuid = ?), restore_batch = ?
+            SET restored_at = ?, restored_by = (SELECT id FROM users WHERE uuid = ?), restore_batch = ?, reverted_at = NULL
             WHERE id = ? AND command_generated = false AND reverted_at IS NOT NULL AND restored_at IS NULL
             """;
 
