@@ -138,7 +138,7 @@ Examples:
 
 ### `/dologger revert preview <filters>` / `confirm` / `cancel`
 
-Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it newest-to-oldest across all matched eligible rows; cancel clears it. Successfully reverted source rows are marked as reverted in the database, and inverse audit rows are linked back to the source rows.
+Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it newest-to-oldest across all matched eligible rows; cancel clears it. Successfully reverted source rows are marked as currently reverted in the database, clearing any prior restored marker so the same source row can be reverted/restored repeatedly. Inverse audit rows are linked back to the source rows.
 
 Permission node: `dologger.revert`
 
@@ -160,7 +160,7 @@ Examples:
 
 ### `/dologger restore preview <filters>` / `confirm` / `cancel`
 
-Previews and safely restores currently reverted block break/place history. Restore requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview only includes source rows that are reverted and not already restored; confirm executes oldest-to-newest across all matched eligible rows and marks successful source rows as restored. Command-generated audit rows are linked back to the original source rows and are not themselves selected for revert/restore.
+Previews and safely restores currently reverted block break/place history. Restore requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview only includes source rows that are currently reverted; confirm executes oldest-to-newest across all matched eligible rows, marks successful source rows as restored, and clears the current revert marker so the same source row can be reverted/restored repeatedly. Command-generated audit rows are linked back to the original source rows and are not themselves selected for revert/restore.
 
 Permission node: `dologger.restore`
 
