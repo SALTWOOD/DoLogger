@@ -136,6 +136,28 @@ Examples:
 /dologger purge 30
 ```
 
+### `/dologger revert preview <filters>` / `confirm` / `cancel`
+
+Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it; cancel clears it.
+
+Permission node: `dologger.revert`
+
+Safety limits:
+
+- Block-only MVP: no container, item, session, entity, chat, or command revert.
+- Preview is capped to `pageSize` changes and runs oldest-first.
+- Reverting a place removes the block only if the current block still matches the logged material.
+- Reverting a break restores only default block state, only into air, and skips block-entity blocks such as chests or signs.
+
+Examples:
+
+```text
+/dologger revert preview action.place_block user.SaltWood_233 radius.10 time.1h
+/dologger revert preview action.break_block include.stone radius.b
+/dologger revert confirm
+/dologger revert cancel
+```
+
 All permission checks currently fall back to Minecraft permission level 2.
 
 ## Lookup Filters
