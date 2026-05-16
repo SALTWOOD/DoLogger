@@ -4,9 +4,9 @@ import net.minecraft.commands.CommandSourceStack;
 
 public final class Permissions {
 
-    public static final String INSPECT = "grieflogger.inspect";
-    public static final String LOOKUP = "grieflogger.lookup";
-    public static final String PAGE = "grieflogger.page";
+    public static final String INSPECT = "dologger.inspect";
+    public static final String LOOKUP = "dologger.lookup";
+    public static final String PAGE = "dologger.page";
     public static final int DEFAULT_OP_LEVEL = 2;
 
     private Permissions() {
