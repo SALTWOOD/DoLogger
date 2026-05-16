@@ -33,11 +33,6 @@ public abstract class BucketItemMixin {
 
     @Shadow @Final public Fluid content;
 
-    @Shadow
-    protected static BlockHitResult getPlayerPOVHitResult(Level level, Player player, ClipContext.Fluid fluidMode) {
-        throw new AssertionError();
-    }
-
     @Inject(method = "use", at = @At("RETURN"))
     private void dologger$use(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir) {
         if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer) || !cir.getReturnValue().getResult().consumesAction()) {
@@ -58,7 +53,7 @@ public abstract class BucketItemMixin {
 
     @Unique
     private void dologger$logPickup(Level level, ServerPlayer player, Services services) {
-        BlockHitResult hit = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
+        BlockHitResult hit = Item.getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
         if (hit.getType() != HitResult.Type.BLOCK) {
             return;
         }
@@ -74,7 +69,7 @@ public abstract class BucketItemMixin {
 
     @Unique
     private void dologger$logPlace(Level level, ServerPlayer player, Services services) {
-        BlockHitResult hit = getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
+        BlockHitResult hit = Item.getPlayerPOVHitResult(level, player, ClipContext.Fluid.NONE);
         if (hit.getType() != HitResult.Type.BLOCK) {
             return;
         }
