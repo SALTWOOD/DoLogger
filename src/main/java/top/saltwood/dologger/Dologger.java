@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import top.saltwood.dologger.database.DatabaseManager;
 import top.saltwood.dologger.database.SqlQueue;
 import top.saltwood.dologger.database.service.Services;
+import top.saltwood.dologger.event.BlockEvents;
 import top.saltwood.dologger.event.PlayerEvents;
 
 @Mod(Dologger.MODID)
@@ -24,11 +25,13 @@ public class Dologger
     private static DatabaseManager databaseManager;
     private static SqlQueue sqlQueue;
     private static Services services;
+    private final BlockEvents blockEvents = new BlockEvents();
 
     public Dologger(IEventBus modEventBus, ModContainer modContainer)
     {
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.register(blockEvents);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
