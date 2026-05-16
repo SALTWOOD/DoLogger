@@ -17,6 +17,7 @@ import top.saltwood.dologger.database.service.Services;
 import top.saltwood.dologger.event.BlockEvents;
 import top.saltwood.dologger.event.EntityEvents;
 import top.saltwood.dologger.event.PlayerEvents;
+import top.saltwood.dologger.event.item.ItemEvents;
 
 @Mod(Dologger.MODID)
 public class Dologger
@@ -27,12 +28,14 @@ public class Dologger
     private static SqlQueue sqlQueue;
     private static Services services;
     private final BlockEvents blockEvents = new BlockEvents();
+    private final ItemEvents itemEvents = new ItemEvents();
 
     public Dologger(IEventBus modEventBus, ModContainer modContainer)
     {
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(blockEvents);
+        NeoForge.EVENT_BUS.register(itemEvents);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 

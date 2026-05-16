@@ -9,7 +9,10 @@
     "BucketItemMixin",
     "EnderManTakeBlockGoalMixin",
     "EnderManLeaveBlockGoalMixin",
-    "ArmorStandMixin"
+    "ArmorStandMixin",
+    "ItemStackMixin",
+    "ItemMixin",
+    "ProjectileMixin"
   ],
   "client": [
   ],
