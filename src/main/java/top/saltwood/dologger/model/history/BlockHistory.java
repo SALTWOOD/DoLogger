@@ -1,5 +1,6 @@
 package top.saltwood.dologger.model.history;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
@@ -70,11 +71,12 @@ public class BlockHistory extends History {
 
     @Override
     public Component getComponent() {
-        return getTime().getFormattedTimeAgo().append(" ")
+        MutableComponent component = getTime().getFormattedTimeAgo().append(" ")
                 .append(getAction().getPrefix())
                 .append(getUser().getNameComponent()).append(" ")
                 .append(getAction().getPastTense()).append(" ")
                 .append(getMaterialComponent());
+        return isCurrentlyReverted() ? component.withStyle(ChatFormatting.STRIKETHROUGH) : component;
     }
 
     @Override
