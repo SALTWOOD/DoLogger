@@ -20,6 +20,7 @@ public final class DoLoggerCommand {
                 .then(InspectCommand.register())
                 .then(LookupCommand.register())
                 .then(PageCommand.register())
-                .then(ReloadCommand.register());
+                .then(ReloadCommand.register())
+                .then(PurgeCommand.register());
     }
 }

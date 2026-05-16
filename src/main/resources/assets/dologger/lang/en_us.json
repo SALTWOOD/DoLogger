@@ -15,6 +15,9 @@
   "dologger.commands.page.info": " Page %s/%s ",
   "dologger.commands.page.out_of_bounds": "Page %s is out of bounds. Choose a page between 1 and %s.",
   "dologger.commands.reload.success": "DoLogger config reloaded. Current language: %s.",
+  "dologger.commands.purge.disabled": "Automatic purge is disabled; specify a positive day count or set purgeRetentionDays.",
+  "dologger.commands.purge.success": "Purged history older than %s days; deleted %s rows.",
+  "dologger.commands.purge.failed": "Failed to purge history: %s",
   "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled.",
 
   "dologger.time.unit.second": "second",

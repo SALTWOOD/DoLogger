@@ -8,6 +8,7 @@ public final class Permissions {
     public static final String LOOKUP = "dologger.lookup";
     public static final String PAGE = "dologger.page";
     public static final String RELOAD = "dologger.reload";
+    public static final String PURGE = "dologger.purge";
     public static final int DEFAULT_OP_LEVEL = 2;
 
     private Permissions() {
@@ -27,6 +28,10 @@ public final class Permissions {
 
     public static boolean canReload(CommandSourceStack source) {
         return check(source, RELOAD);
+    }
+
+    public static boolean canPurge(CommandSourceStack source) {
+        return check(source, PURGE);
     }
 
     public static boolean check(CommandSourceStack source, String permissionNode) {

@@ -15,6 +15,9 @@
   "dologger.commands.page.info": " 第 %s/%s 页 ",
   "dologger.commands.page.out_of_bounds": "第 %s 页超出范围。请选择 1 到 %s 之间的页码。",
   "dologger.commands.reload.success": "DoLogger 配置已重载。当前语言：%s。",
+  "dologger.commands.purge.disabled": "自动清理未启用；请指定正数天数，或设置 purgeRetentionDays。",
+  "dologger.commands.purge.success": "已清理 %s 天前的历史记录；删除了 %s 行。",
+  "dologger.commands.purge.failed": "清理历史记录失败：%s",
   "dologger.database.unavailable": "DoLogger 数据库不可用；日志记录和查询命令已禁用。",
 
   "dologger.time.unit.second": "秒",
