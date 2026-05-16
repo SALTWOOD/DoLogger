@@ -63,15 +63,15 @@ public class BlockRepository {
             JOIN levels l ON b.level = l.id
             JOIN materials m ON b.type = m.id
             WHERE l.name = ?
-            AND (? IS NULL OR u.name = ANY(?) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?)))
-            AND (? IS NULL OR b.time >= ?)
-            AND (? IS NULL OR b.time <= ?)
-            AND (? IS NULL OR b.x BETWEEN ? AND ?)
-            AND (? IS NULL OR b.y BETWEEN ? AND ?)
-            AND (? IS NULL OR b.z BETWEEN ? AND ?)
-            AND (? IS NULL OR b.action = ANY(?))
-            AND (? IS NULL OR m.name = ANY(?))
-            AND (? IS NULL OR NOT (m.name = ANY(?)))
+            AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
+            AND (? OR b.time >= ?)
+            AND (? OR b.time <= ?)
+            AND (? OR b.x BETWEEN ? AND ?)
+            AND (? OR b.y BETWEEN ? AND ?)
+            AND (? OR b.z BETWEEN ? AND ?)
+            AND (? OR b.action = ANY(?::integer[]))
+            AND (? OR m.name = ANY(?::text[]))
+            AND (? OR NOT (m.name = ANY(?::text[])))
             ORDER BY b.time DESC LIMIT 1000
             """;
 
@@ -144,14 +144,6 @@ public class BlockRepository {
         }
     }
 
-    static void bindNullGuardFilters(PreparedStatement stmt, int start, List<Object> filters, int count) throws SQLException {
-        for (int i = 0; i < count; i++) {
-            Object value = filters != null && i < filters.size() ? filters.get(i) : null;
-            stmt.setObject(start + (i * 2), value);
-            stmt.setObject(start + (i * 2) + 1, value);
-        }
-    }
-
     static void bindHistoryFilters(PreparedStatement stmt, int start, List<Object> filters, boolean includeMaterialFilters) throws SQLException {
         int index = start;
         index = bindUserFilter(stmt, index, value(filters, 0));
@@ -172,53 +164,62 @@ public class BlockRepository {
     }
 
     private static int bindPair(PreparedStatement stmt, int index, Object value) throws SQLException {
-        stmt.setObject(index++, value);
-        stmt.setObject(index++, value);
+        boolean disabled = value == null;
+        stmt.setBoolean(index++, disabled);
+        if (value instanceof Long longValue) {
+            stmt.setLong(index++, longValue);
+        } else if (value instanceof Integer intValue) {
+            stmt.setInt(index++, intValue);
+        } else {
+            stmt.setLong(index++, 0L);
+        }
         return index;
     }
 
     private static int bindBetween(PreparedStatement stmt, int index, Object min, Object max) throws SQLException {
-        stmt.setObject(index++, min);
-        stmt.setObject(index++, min);
-        stmt.setObject(index++, max);
+        boolean disabled = min == null || max == null;
+        stmt.setBoolean(index++, disabled);
+        stmt.setInt(index++, min instanceof Integer value ? value : 0);
+        stmt.setInt(index++, max instanceof Integer value ? value : 0);
         return index;
     }
 
     private static int bindIntArray(PreparedStatement stmt, int index, Object value) throws SQLException {
+        boolean disabled = !(value instanceof int[]);
+        stmt.setBoolean(index++, disabled);
         if (value instanceof int[] values) {
             Integer[] boxed = java.util.Arrays.stream(values).boxed().toArray(Integer[]::new);
             java.sql.Array array = stmt.getConnection().createArrayOf("integer", boxed);
             stmt.setArray(index++, array);
-            stmt.setArray(index++, array);
         } else {
-            stmt.setArray(index++, null);
-            stmt.setArray(index++, null);
+            stmt.setArray(index++, stmt.getConnection().createArrayOf("integer", new Integer[0]));
         }
         return index;
     }
 
     private static int bindUserFilter(PreparedStatement stmt, int index, Object value) throws SQLException {
+        boolean disabled = !(value instanceof String[]);
+        stmt.setBoolean(index++, disabled);
         if (value instanceof String[] values) {
             java.sql.Array array = stmt.getConnection().createArrayOf("text", values);
             stmt.setArray(index++, array);
             stmt.setArray(index++, array);
-            stmt.setArray(index++, array);
         } else {
-            stmt.setArray(index++, null);
-            stmt.setArray(index++, null);
-            stmt.setArray(index++, null);
+            java.sql.Array array = stmt.getConnection().createArrayOf("text", new String[0]);
+            stmt.setArray(index++, array);
+            stmt.setArray(index++, array);
         }
         return index;
     }
 
     private static int bindTextArray(PreparedStatement stmt, int index, Object value) throws SQLException {
+        boolean disabled = !(value instanceof String[]);
+        stmt.setBoolean(index++, disabled);
         if (value instanceof String[] values) {
             java.sql.Array array = stmt.getConnection().createArrayOf("text", values);
             stmt.setArray(index++, array);
-            stmt.setArray(index++, array);
         } else {
-            stmt.setArray(index++, null);
-            stmt.setArray(index++, null);
+            stmt.setArray(index++, stmt.getConnection().createArrayOf("text", new String[0]));
         }
         return index;
     }
