@@ -24,7 +24,7 @@ public class SessionRepository {
             JOIN users u ON s.user_id = u.id
             JOIN levels l ON s.level = l.id
             WHERE l.name = ?
-            AND (? IS NULL OR u.name = ?)
+            AND (? IS NULL OR u.name = ANY(?) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?)))
             AND (? IS NULL OR s.time >= ?)
             AND (? IS NULL OR s.time <= ?)
             AND (? IS NULL OR s.x BETWEEN ? AND ?)

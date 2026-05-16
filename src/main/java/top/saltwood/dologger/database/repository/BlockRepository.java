@@ -63,7 +63,7 @@ public class BlockRepository {
             JOIN levels l ON b.level = l.id
             JOIN materials m ON b.type = m.id
             WHERE l.name = ?
-            AND (? IS NULL OR u.name = ?)
+            AND (? IS NULL OR u.name = ANY(?) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?)))
             AND (? IS NULL OR b.time >= ?)
             AND (? IS NULL OR b.time <= ?)
             AND (? IS NULL OR b.x BETWEEN ? AND ?)
@@ -154,7 +154,7 @@ public class BlockRepository {
 
     static void bindHistoryFilters(PreparedStatement stmt, int start, List<Object> filters, boolean includeMaterialFilters) throws SQLException {
         int index = start;
-        index = bindPair(stmt, index, value(filters, 0));
+        index = bindUserFilter(stmt, index, value(filters, 0));
         index = bindPair(stmt, index, value(filters, 1));
         index = bindPair(stmt, index, value(filters, 2));
         index = bindBetween(stmt, index, value(filters, 3), value(filters, 4));
@@ -191,6 +191,20 @@ public class BlockRepository {
             stmt.setArray(index++, array);
             stmt.setArray(index++, array);
         } else {
+            stmt.setArray(index++, null);
+            stmt.setArray(index++, null);
+        }
+        return index;
+    }
+
+    private static int bindUserFilter(PreparedStatement stmt, int index, Object value) throws SQLException {
+        if (value instanceof String[] values) {
+            java.sql.Array array = stmt.getConnection().createArrayOf("text", values);
+            stmt.setArray(index++, array);
+            stmt.setArray(index++, array);
+            stmt.setArray(index++, array);
+        } else {
+            stmt.setArray(index++, null);
             stmt.setArray(index++, null);
             stmt.setArray(index++, null);
         }

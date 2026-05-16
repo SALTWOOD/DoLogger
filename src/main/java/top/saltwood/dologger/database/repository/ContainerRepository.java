@@ -61,7 +61,7 @@ public class ContainerRepository {
             JOIN levels l ON c.level = l.id
             JOIN materials m ON c.type = m.id
             WHERE l.name = ?
-            AND (? IS NULL OR u.name = ?)
+            AND (? IS NULL OR u.name = ANY(?) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?)))
             AND (? IS NULL OR c.time >= ?)
             AND (? IS NULL OR c.time <= ?)
             AND (? IS NULL OR c.x BETWEEN ? AND ?)

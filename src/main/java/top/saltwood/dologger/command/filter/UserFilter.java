@@ -13,6 +13,6 @@ public record UserFilter(List<String> usernames) {
     }
 
     Object queryValue() {
-        return usernames.isEmpty() ? null : usernames.getFirst();
+        return usernames.isEmpty() ? null : usernames.toArray(String[]::new);
     }
 }
