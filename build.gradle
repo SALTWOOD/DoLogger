@@ -96,6 +96,17 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 
 dependencies {
+    jarJar(implementation('org.postgresql:postgresql')) {
+        version {
+            prefer '42.7.5'
+        }
+    }
+    jarJar(implementation('com.zaxxer:HikariCP')) {
+        version {
+            prefer '5.1.0'
+        }
+    }
+
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
