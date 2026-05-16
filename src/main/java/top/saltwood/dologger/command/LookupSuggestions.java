@@ -25,7 +25,7 @@ final class LookupSuggestions {
             "break_block", "place_block", "interact_block", "kill_entity", "interact_entity",
             "remove_item", "add_item", "drop_item", "pickup_item", "craft_item", "break_item",
             "consume_item", "throw_item", "shoot_item", "add_item_ender", "remove_item_ender", "join", "quit");
-    private static final List<String> RADII = List.of("radius.5", "radius.10", "radius.25");
+    private static final List<String> RADII = List.of("radius.b", "radius.5", "radius.10", "radius.25", "radius.1c", "radius.2c");
     private static final List<String> TIMES = List.of("time.30m", "time.1h", "time.1d", "time.7d");
 
     private LookupSuggestions() {
