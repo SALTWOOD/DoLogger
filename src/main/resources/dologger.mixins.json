@@ -4,7 +4,12 @@
   "package": "top.saltwood.dologger.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ServerPlayerMixin"
+    "ServerPlayerMixin",
+    "ServerExplosionMixin",
+    "BucketItemMixin",
+    "EnderManTakeBlockGoalMixin",
+    "EnderManLeaveBlockGoalMixin",
+    "ArmorStandMixin"
   ],
   "client": [
   ],

@@ -15,6 +15,7 @@ import top.saltwood.dologger.database.DatabaseManager;
 import top.saltwood.dologger.database.SqlQueue;
 import top.saltwood.dologger.database.service.Services;
 import top.saltwood.dologger.event.BlockEvents;
+import top.saltwood.dologger.event.EntityEvents;
 import top.saltwood.dologger.event.PlayerEvents;
 
 @Mod(Dologger.MODID)
@@ -51,6 +52,7 @@ public class Dologger
             sqlQueue = new SqlQueue(databaseManager);
             sqlQueue.start();
             services = new Services();
+            NeoForge.EVENT_BUS.register(new EntityEvents());
             NeoForge.EVENT_BUS.register(new PlayerEvents());
         }
     }
