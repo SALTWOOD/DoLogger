@@ -22,6 +22,7 @@ public final class DoLoggerCommand {
                 .then(PageCommand.register())
                 .then(ReloadCommand.register())
                 .then(PurgeCommand.register())
-                .then(RevertCommand.register());
+                .then(RevertCommand.register())
+                .then(RestoreCommand.register());
     }
 }
