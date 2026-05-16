@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,14 +23,35 @@ import top.saltwood.dologger.util.LanguageResolver;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public class BlockEvents {
 
     private static final Set<UUID> inspectingPlayers = new HashSet<>();
+
+    /** Debounce: player UUID -> last-inspected (dimension + BlockPos) as a single key, mapped to timestamp. */
+    private static final Map<String, Long> inspectDebounce = new HashMap<>();
+    private static final long DEBOUNCE_MS = 500;
+
+    /**
+     * Returns true if this inspect request should proceed (new target or debounce expired).
+     * Keyed by player UUID + dimension + block position so inspecting a different block always shows immediately.
+     */
+    private static boolean tryInspect(ServerPlayer player, BlockPos pos) {
+        String key = player.getUUID() + ":" + player.level().dimension().location() + ":" + pos;
+        long now = System.currentTimeMillis();
+        Long last = inspectDebounce.get(key);
+        if (last != null && now - last < DEBOUNCE_MS) {
+            return false;
+        }
+        inspectDebounce.put(key, now);
+        return true;
+    }
 
     public static boolean isInspecting(ServerPlayer player) {
         return player instanceof DoLoggerServerPlayer doLoggerPlayer
@@ -71,8 +93,8 @@ public class BlockEvents {
         BlockPos pos = event.getPos();
         BlockState state = event.getState();
 
+        // Inspect-mode left-click is handled by onLeftClickBlock(Action.START) only
         if (isInspecting(player)) {
-            showHistory(player, services, level, historyPositions(level, pos, state));
             event.setCanceled(true);
             return;
         }
@@ -119,7 +141,10 @@ public class BlockEvents {
         BlockState state = level.getBlockState(pos);
 
         if (isInspecting(player)) {
-            showHistory(player, services, level, historyPositions(level, pos, state));
+            if (tryInspect(player, pos)) {
+                showHistory(player, services, level, historyPositions(level, pos, state));
+            }
+            event.setCancellationResult(InteractionResult.CONSUME);
             event.setCanceled(true);
             return;
         }
@@ -132,6 +157,10 @@ public class BlockEvents {
 
     @SubscribeEvent
     public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) {
+            return;
+        }
+
         Level level = event.getLevel();
         if (level.isClientSide() || !(event.getEntity() instanceof ServerPlayer player) || !isInspecting(player)) {
             return;
@@ -143,6 +172,10 @@ public class BlockEvents {
         }
 
         BlockPos pos = event.getPos();
+        if (!tryInspect(player, pos)) {
+            return;
+        }
+
         showHistory(player, services, level, historyPositions(level, pos, level.getBlockState(pos)));
         event.setCanceled(true);
     }
