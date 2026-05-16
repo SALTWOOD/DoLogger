@@ -49,7 +49,7 @@ public class DatabaseManager {
                 LOGGER.error("DoLogger: Failed to validate PostgreSQL connection at {}:{}/{}", Config.host, Config.port, Config.database);
                 closeDataSource();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             available = false;
             LOGGER.error("DoLogger: PostgreSQL unavailable at {}:{}/{}; database logging skipped - {}", Config.host, Config.port, Config.database, e.getMessage());
             closeDataSource();
