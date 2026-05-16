@@ -3,6 +3,7 @@ package top.saltwood.dologger.model.action;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import top.saltwood.dologger.model.Operation;
+import top.saltwood.dologger.util.LanguageResolver;
 
 public enum SessionAction implements IAction {
     JOIN(0, Operation.ADD),
@@ -38,8 +39,8 @@ public enum SessionAction implements IAction {
     @Override
     public Component getPastTense() {
         return switch (this) {
-            case JOIN -> Component.translatable("dologger.action.join.past");
-            case QUIT -> Component.translatable("dologger.action.quit.past");
+            case JOIN -> LanguageResolver.component("dologger.action.join.past");
+            case QUIT -> LanguageResolver.component("dologger.action.quit.past");
         };
     }
 }

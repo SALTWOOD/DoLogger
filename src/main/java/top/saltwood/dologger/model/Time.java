@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import top.saltwood.dologger.util.LanguageResolver;
 
 import java.util.Date;
 import java.util.Locale;
@@ -26,7 +27,7 @@ public record Time(long time) {
     }
 
     private MutableComponent getTimeAgoComponent(double timeAgo, Component unit) {
-        return Component.translatable("dologger.lookup.time.ago", String.format(Locale.ROOT, "%.2f", timeAgo), Component.translatable("dologger.time.divider"), unit)
+        return LanguageResolver.component("dologger.lookup.time.ago", String.format(Locale.ROOT, "%.2f", timeAgo), LanguageResolver.resolve("dologger.time.divider"), unit)
                 .withStyle(Style.EMPTY
                         .withColor(ChatFormatting.GRAY)
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(new Date(time).toString()).withStyle(ChatFormatting.GRAY))));
