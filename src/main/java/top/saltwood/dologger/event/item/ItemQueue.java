@@ -10,7 +10,6 @@ import top.saltwood.dologger.model.action.ItemAction;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.UUID;
 
 public final class ItemQueue {
 
-    private static final Map<UUID, Map<ItemAction, List<SimpleItemStack>>> QUEUES = new HashMap<>();
+    private static final Map<UUID, Map<ItemAction, List<SimpleItemStack>>> QUEUES = new java.util.concurrent.ConcurrentHashMap<>();
 
     private ItemQueue() {
     }

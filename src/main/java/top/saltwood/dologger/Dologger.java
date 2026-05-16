@@ -30,14 +30,18 @@ public class Dologger
     private static SqlQueue sqlQueue;
     private static Services services;
     private final BlockEvents blockEvents = new BlockEvents();
+    private final EntityEvents entityEvents = new EntityEvents();
     private final ItemEvents itemEvents = new ItemEvents();
+    private final PlayerEvents playerEvents = new PlayerEvents();
 
     public Dologger(IEventBus modEventBus, ModContainer modContainer)
     {
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(blockEvents);
+        NeoForge.EVENT_BUS.register(entityEvents);
         NeoForge.EVENT_BUS.register(itemEvents);
+        NeoForge.EVENT_BUS.register(playerEvents);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
@@ -62,8 +66,6 @@ public class Dologger
             sqlQueue = new SqlQueue(databaseManager);
             sqlQueue.start();
             services = new Services();
-            NeoForge.EVENT_BUS.register(new EntityEvents());
-            NeoForge.EVENT_BUS.register(new PlayerEvents());
         }
     }
 
