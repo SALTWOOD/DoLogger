@@ -84,6 +84,10 @@ public class Config {
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
+        refresh();
+    }
+
+    public static void refresh() {
         enabled = ENABLED.get();
         language = LANGUAGE.get();
         host = HOST.get();
@@ -98,5 +102,10 @@ public class Config {
         maxLifetime = MAX_LIFETIME.get();
         queueFlushTimeout = QUEUE_FLUSH_TIMEOUT.get();
         pageSize = PAGE_SIZE.get();
+    }
+
+    public static void reload() {
+        SPEC.afterReload();
+        refresh();
     }
 }
