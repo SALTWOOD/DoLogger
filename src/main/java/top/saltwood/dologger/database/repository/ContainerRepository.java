@@ -64,11 +64,12 @@ public class ContainerRepository {
             AND (? IS NULL OR u.name = ?)
             AND (? IS NULL OR c.time >= ?)
             AND (? IS NULL OR c.time <= ?)
-            AND (? IS NULL OR c.x = ?)
-            AND (? IS NULL OR c.y = ?)
-            AND (? IS NULL OR c.z = ?)
-            AND (? IS NULL OR c.action = ?)
-            AND (? IS NULL OR m.name = ?)
+            AND (? IS NULL OR c.x BETWEEN ? AND ?)
+            AND (? IS NULL OR c.y BETWEEN ? AND ?)
+            AND (? IS NULL OR c.z BETWEEN ? AND ?)
+            AND (? IS NULL OR c.action = ANY(?))
+            AND (? IS NULL OR m.name = ANY(?))
+            AND (? IS NULL OR NOT (m.name = ANY(?)))
             ORDER BY c.time DESC LIMIT 1000
             """;
 
@@ -127,7 +128,7 @@ public class ContainerRepository {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(SELECT_FILTERED)) {
             stmt.setString(1, level);
-            BlockRepository.bindNullGuardFilters(stmt, 2, filters, 8);
+            BlockRepository.bindHistoryFilters(stmt, 2, filters, true);
             try (ResultSet rs = stmt.executeQuery()) {
                 return mapHistory(rs);
             }

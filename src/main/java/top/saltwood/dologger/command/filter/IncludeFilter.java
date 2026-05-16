@@ -13,6 +13,6 @@ public record IncludeFilter(List<String> materials) {
     }
 
     Object queryValue() {
-        return materials.isEmpty() ? null : materials.getFirst();
+        return materials.isEmpty() ? null : materials.toArray(String[]::new);
     }
 }

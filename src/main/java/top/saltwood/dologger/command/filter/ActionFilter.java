@@ -33,7 +33,7 @@ public record ActionFilter(List<Integer> actionIds) {
     }
 
     Object queryValue() {
-        return actionIds.isEmpty() ? null : actionIds.getFirst();
+        return actionIds.isEmpty() ? null : actionIds.stream().mapToInt(Integer::intValue).toArray();
     }
 
     private static Map<String, Integer> createActionIds() {

@@ -35,13 +35,21 @@ public class BlockRepository {
             ORDER BY b.time DESC
             """;
     private static final String SELECT_INTERACTION_HISTORY = """
-            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, COALESCE(m.name, e.name) AS material, b.action
+            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
-            LEFT JOIN materials m ON b.type = m.id AND b.action = 2
-            LEFT JOIN entities e ON b.type = e.id AND b.action = 4
-            WHERE l.name = ? AND b.x = ? AND b.y = ? AND b.z = ? AND b.action IN (2, 4)
+            JOIN materials m ON b.type = m.id
+            WHERE l.name = ? AND b.x = ? AND b.y = ? AND b.z = ? AND b.action = 2
+            ORDER BY b.time DESC
+            """;
+    private static final String SELECT_ENTITY_HISTORY = """
+            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, e.name AS material, b.action
+            FROM blocks b
+            JOIN users u ON b.user_id = u.id
+            JOIN levels l ON b.level = l.id
+            JOIN entities e ON b.type = e.id
+            WHERE l.name = ? AND b.x = ? AND b.y = ? AND b.z = ? AND b.action IN (3, 4)
             ORDER BY b.time DESC
             """;
     private static final String DELETE_INTERACTIONS = """
@@ -58,11 +66,12 @@ public class BlockRepository {
             AND (? IS NULL OR u.name = ?)
             AND (? IS NULL OR b.time >= ?)
             AND (? IS NULL OR b.time <= ?)
-            AND (? IS NULL OR b.x = ?)
-            AND (? IS NULL OR b.y = ?)
-            AND (? IS NULL OR b.z = ?)
-            AND (? IS NULL OR b.action = ?)
-            AND (? IS NULL OR m.name = ?)
+            AND (? IS NULL OR b.x BETWEEN ? AND ?)
+            AND (? IS NULL OR b.y BETWEEN ? AND ?)
+            AND (? IS NULL OR b.z BETWEEN ? AND ?)
+            AND (? IS NULL OR b.action = ANY(?))
+            AND (? IS NULL OR m.name = ANY(?))
+            AND (? IS NULL OR NOT (m.name = ANY(?)))
             ORDER BY b.time DESC LIMIT 1000
             """;
 
@@ -86,7 +95,9 @@ public class BlockRepository {
     }
 
     public List<BlockHistory> getInteractionHistory(String levelName, int x, int y, int z) throws SQLException {
-        return queryPositionHistory(SELECT_INTERACTION_HISTORY, levelName, x, y, z);
+        List<BlockHistory> history = new ArrayList<>(queryPositionHistory(SELECT_INTERACTION_HISTORY, levelName, x, y, z));
+        history.addAll(queryPositionHistory(SELECT_ENTITY_HISTORY, levelName, x, y, z));
+        return history;
     }
 
     public void removeInteractionsForPosition(String levelName, int x, int y, int z) {
@@ -105,7 +116,7 @@ public class BlockRepository {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(SELECT_FILTERED)) {
             stmt.setString(1, levelName);
-            bindNullGuardFilters(stmt, 2, filters, 8);
+            bindHistoryFilters(stmt, 2, filters, true);
             try (ResultSet rs = stmt.executeQuery()) {
                 return mapBlockHistory(rs);
             }
@@ -139,6 +150,63 @@ public class BlockRepository {
             stmt.setObject(start + (i * 2), value);
             stmt.setObject(start + (i * 2) + 1, value);
         }
+    }
+
+    static void bindHistoryFilters(PreparedStatement stmt, int start, List<Object> filters, boolean includeMaterialFilters) throws SQLException {
+        int index = start;
+        index = bindPair(stmt, index, value(filters, 0));
+        index = bindPair(stmt, index, value(filters, 1));
+        index = bindPair(stmt, index, value(filters, 2));
+        index = bindBetween(stmt, index, value(filters, 3), value(filters, 4));
+        index = bindBetween(stmt, index, value(filters, 5), value(filters, 6));
+        index = bindBetween(stmt, index, value(filters, 7), value(filters, 8));
+        index = bindIntArray(stmt, index, value(filters, 9));
+        if (includeMaterialFilters) {
+            index = bindTextArray(stmt, index, value(filters, 10));
+            bindTextArray(stmt, index, value(filters, 11));
+        }
+    }
+
+    private static Object value(List<Object> filters, int index) {
+        return filters != null && index < filters.size() ? filters.get(index) : null;
+    }
+
+    private static int bindPair(PreparedStatement stmt, int index, Object value) throws SQLException {
+        stmt.setObject(index++, value);
+        stmt.setObject(index++, value);
+        return index;
+    }
+
+    private static int bindBetween(PreparedStatement stmt, int index, Object min, Object max) throws SQLException {
+        stmt.setObject(index++, min);
+        stmt.setObject(index++, min);
+        stmt.setObject(index++, max);
+        return index;
+    }
+
+    private static int bindIntArray(PreparedStatement stmt, int index, Object value) throws SQLException {
+        if (value instanceof int[] values) {
+            Integer[] boxed = java.util.Arrays.stream(values).boxed().toArray(Integer[]::new);
+            java.sql.Array array = stmt.getConnection().createArrayOf("integer", boxed);
+            stmt.setArray(index++, array);
+            stmt.setArray(index++, array);
+        } else {
+            stmt.setArray(index++, null);
+            stmt.setArray(index++, null);
+        }
+        return index;
+    }
+
+    private static int bindTextArray(PreparedStatement stmt, int index, Object value) throws SQLException {
+        if (value instanceof String[] values) {
+            java.sql.Array array = stmt.getConnection().createArrayOf("text", values);
+            stmt.setArray(index++, array);
+            stmt.setArray(index++, array);
+        } else {
+            stmt.setArray(index++, null);
+            stmt.setArray(index++, null);
+        }
+        return index;
     }
 
     private static List<BlockHistory> queryPositionHistory(String sql, String levelName, int x, int y, int z) throws SQLException {

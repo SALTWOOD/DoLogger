@@ -4,8 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -24,7 +22,6 @@ import top.saltwood.dologger.model.action.ItemAction;
 import top.saltwood.dologger.model.history.IHistory;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,28 +138,6 @@ public abstract class ServerPlayerMixin implements DoLoggerServerPlayer {
         dologger$containerTransactionManager = null;
         dologger$containerLevel = null;
         dologger$containerPos = null;
-    }
-
-    @Inject(method = "tick", at = @At("TAIL"))
-    private void dologger$tick(CallbackInfo ci) {
-        if (dologger$itemQueue.isEmpty()) {
-            return;
-        }
-
-        ServerPlayer player = (ServerPlayer) (Object) this;
-        Services services = Dologger.getServices();
-        if (services != null) {
-            services.item().insertMap(player.getUUID(), player.getGameProfile().getName(), player.level(), player.blockPosition(), dologger$itemQueue);
-        }
-        dologger$itemQueue = new HashMap<>();
-    }
-
-    @Inject(method = "drop", at = @At("RETURN"))
-    private void dologger$drop(ItemStack droppedItem, boolean dropAround, boolean traceItem, CallbackInfoReturnable<ItemEntity> cir) {
-        if (droppedItem == null || droppedItem.isEmpty() || cir.getReturnValue() == null) {
-            return;
-        }
-        dologger$itemQueue.computeIfAbsent(ItemAction.DROP_ITEM, ignored -> new java.util.ArrayList<>()).add(SimpleItemStack.of(droppedItem.copy()));
     }
 
     @Unique

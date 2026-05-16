@@ -48,6 +48,10 @@ public class BlockService {
         return insertEntity(player.getUUID(), player.getGameProfile().getName(), level, pos, ServiceSupport.entityName(entity), action);
     }
 
+    public boolean insertEntity(UUID userUuid, String username, Level level, BlockPos pos, Entity entity, BlockAction action) {
+        return insertEntity(userUuid, username, level, pos, ServiceSupport.entityName(entity), action);
+    }
+
     public boolean insertEntity(UUID userUuid, String username, Level level, BlockPos pos, String entity, BlockAction action) {
         if (!prepareUserLevel(userUuid, username, level) || !entityService.ensure(entity)) {
             return false;

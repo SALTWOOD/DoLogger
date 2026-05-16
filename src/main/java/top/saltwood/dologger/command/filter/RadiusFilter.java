@@ -28,19 +28,27 @@ public record RadiusFilter(int radius, int minX, int maxX, int minY, int maxY, i
         );
     }
 
-    Object queryXValue() {
-        return originCoordinate(minX, maxX);
+    Object queryMinXValue() {
+        return minX;
     }
 
-    Object queryYValue() {
-        return originCoordinate(minY, maxY);
+    Object queryMaxXValue() {
+        return maxX;
     }
 
-    Object queryZValue() {
-        return originCoordinate(minZ, maxZ);
+    Object queryMinYValue() {
+        return minY;
     }
 
-    private static int originCoordinate(int min, int max) {
-        return min + ((max - min) / 2);
+    Object queryMaxYValue() {
+        return maxY;
+    }
+
+    Object queryMinZValue() {
+        return minZ;
+    }
+
+    Object queryMaxZValue() {
+        return maxZ;
     }
 }

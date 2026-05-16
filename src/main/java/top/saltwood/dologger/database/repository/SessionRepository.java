@@ -27,10 +27,10 @@ public class SessionRepository {
             AND (? IS NULL OR u.name = ?)
             AND (? IS NULL OR s.time >= ?)
             AND (? IS NULL OR s.time <= ?)
-            AND (? IS NULL OR s.x = ?)
-            AND (? IS NULL OR s.y = ?)
-            AND (? IS NULL OR s.z = ?)
-            AND (? IS NULL OR s.action = ?)
+            AND (? IS NULL OR s.x BETWEEN ? AND ?)
+            AND (? IS NULL OR s.y BETWEEN ? AND ?)
+            AND (? IS NULL OR s.z BETWEEN ? AND ?)
+            AND (? IS NULL OR s.action = ANY(?))
             ORDER BY s.time DESC LIMIT 1000
             """;
 
@@ -53,7 +53,7 @@ public class SessionRepository {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(SELECT_FILTERED)) {
             stmt.setString(1, levelName);
-            BlockRepository.bindNullGuardFilters(stmt, 2, filters, 7);
+            BlockRepository.bindHistoryFilters(stmt, 2, filters, false);
             try (ResultSet rs = stmt.executeQuery()) {
                 List<SessionHistory> history = new ArrayList<>();
                 while (rs.next()) {

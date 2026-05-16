@@ -31,11 +31,12 @@ public class ItemRepository {
             AND (? IS NULL OR u.name = ?)
             AND (? IS NULL OR i.time >= ?)
             AND (? IS NULL OR i.time <= ?)
-            AND (? IS NULL OR i.x = ?)
-            AND (? IS NULL OR i.y = ?)
-            AND (? IS NULL OR i.z = ?)
-            AND (? IS NULL OR i.action = ?)
-            AND (? IS NULL OR m.name = ?)
+            AND (? IS NULL OR i.x BETWEEN ? AND ?)
+            AND (? IS NULL OR i.y BETWEEN ? AND ?)
+            AND (? IS NULL OR i.z BETWEEN ? AND ?)
+            AND (? IS NULL OR i.action = ANY(?))
+            AND (? IS NULL OR m.name = ANY(?))
+            AND (? IS NULL OR NOT (m.name = ANY(?)))
             ORDER BY i.time DESC LIMIT 1000
             """;
 
@@ -65,7 +66,7 @@ public class ItemRepository {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(SELECT_FILTERED)) {
             stmt.setString(1, level);
-            BlockRepository.bindNullGuardFilters(stmt, 2, filters, 8);
+            BlockRepository.bindHistoryFilters(stmt, 2, filters, true);
             try (ResultSet rs = stmt.executeQuery()) {
                 return mapHistory(rs);
             }

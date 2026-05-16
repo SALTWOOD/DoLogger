@@ -48,19 +48,23 @@ public class FilterList {
     }
 
     public List<Object> toRepositoryParams() {
-        List<Object> params = new ArrayList<>(8);
+        List<Object> params = new ArrayList<>(12);
         params.add(user == null ? null : user.queryValue());
         params.add(time == null ? null : time.queryValue());
         params.add(null);
-        params.add(radius == null ? null : radius.queryXValue());
-        params.add(radius == null ? null : radius.queryYValue());
-        params.add(radius == null ? null : radius.queryZValue());
+        params.add(radius == null ? null : radius.queryMinXValue());
+        params.add(radius == null ? null : radius.queryMaxXValue());
+        params.add(radius == null ? null : radius.queryMinYValue());
+        params.add(radius == null ? null : radius.queryMaxYValue());
+        params.add(radius == null ? null : radius.queryMinZValue());
+        params.add(radius == null ? null : radius.queryMaxZValue());
         params.add(action == null ? null : action.queryValue());
         params.add(include == null ? null : include.queryValue());
+        params.add(exclude == null ? null : exclude.queryValue());
         return params;
     }
 
     public List<Object> toSessionRepositoryParams() {
-        return toRepositoryParams().subList(0, 7);
+        return toRepositoryParams().subList(0, 10);
     }
 }
