@@ -39,8 +39,11 @@ public class DatabaseManager {
             dataSource = new HikariDataSource(config);
 
             if (isConnectionHealthy()) {
-                available = true;
-                LOGGER.info("DoLogger: Connected to PostgreSQL at {}:{}/{}", Config.host, Config.port, Config.database);
+                try (Connection connection = dataSource.getConnection()) {
+                    SchemaCreator.createSchema(connection);
+                    available = true;
+                    LOGGER.info("DoLogger: Connected to PostgreSQL at {}:{}/{}", Config.host, Config.port, Config.database);
+                }
             } else {
                 available = false;
                 LOGGER.error("DoLogger: Failed to validate PostgreSQL connection at {}:{}/{}", Config.host, Config.port, Config.database);
@@ -48,7 +51,7 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             available = false;
-            LOGGER.error("DoLogger: Failed to connect to PostgreSQL at {}:{}/{} - {}", Config.host, Config.port, Config.database, e.getMessage());
+            LOGGER.error("DoLogger: PostgreSQL unavailable at {}:{}/{}; database logging skipped - {}", Config.host, Config.port, Config.database, e.getMessage());
             closeDataSource();
         }
     }
