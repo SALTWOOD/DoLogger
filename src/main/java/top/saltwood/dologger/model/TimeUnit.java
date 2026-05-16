@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import top.saltwood.dologger.util.LanguageResolver;
 
 public enum TimeUnit {
+    SECOND(1_000L),
     MINUTE(60_000L),
     HOUR(3_600_000L),
     DAY(86_400_000L),
@@ -21,5 +22,12 @@ public enum TimeUnit {
 
     public Component getName() {
         return LanguageResolver.component("dologger.time.unit." + name().toLowerCase());
+    }
+
+    public Component getName(long amount) {
+        if (amount == 1L) {
+            return getName();
+        }
+        return LanguageResolver.component("dologger.time.unit." + name().toLowerCase() + ".plural");
     }
 }

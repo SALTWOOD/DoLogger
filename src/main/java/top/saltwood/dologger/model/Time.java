@@ -7,29 +7,45 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import top.saltwood.dologger.util.LanguageResolver;
 
-import java.util.Date;
-import java.util.Locale;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public record Time(long time) {
 
+    private static final DateTimeFormatter ABSOLUTE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd, HH:mm:ss")
+            .withZone(ZoneId.systemDefault());
+
     public MutableComponent getFormattedTimeAgo() {
         long timeAgo = Math.max(0L, System.currentTimeMillis() - time);
-        if (timeAgo < TimeUnit.HOUR.getMilliseconds() / 2) {
-            return getTimeAgoComponent((double) timeAgo / TimeUnit.MINUTE.getMilliseconds(), TimeUnit.MINUTE.getName());
+        if (timeAgo < TimeUnit.MINUTE.getMilliseconds()) {
+            long amount = amount(timeAgo, TimeUnit.SECOND);
+            return getTimeAgoComponent(amount, TimeUnit.SECOND.getName(amount));
         }
-        if (timeAgo < TimeUnit.DAY.getMilliseconds() / 2) {
-            return getTimeAgoComponent((double) timeAgo / TimeUnit.HOUR.getMilliseconds(), TimeUnit.HOUR.getName());
+        if (timeAgo < TimeUnit.HOUR.getMilliseconds()) {
+            long amount = amount(timeAgo, TimeUnit.MINUTE);
+            return getTimeAgoComponent(amount, TimeUnit.MINUTE.getName(amount));
         }
-        if (timeAgo < TimeUnit.YEAR.getMilliseconds() / 2) {
-            return getTimeAgoComponent((double) timeAgo / TimeUnit.DAY.getMilliseconds(), TimeUnit.DAY.getName());
+        if (timeAgo < TimeUnit.DAY.getMilliseconds()) {
+            long amount = amount(timeAgo, TimeUnit.HOUR);
+            return getTimeAgoComponent(amount, TimeUnit.HOUR.getName(amount));
         }
-        return getTimeAgoComponent((double) timeAgo / TimeUnit.YEAR.getMilliseconds(), TimeUnit.YEAR.getName());
+        if (timeAgo < TimeUnit.YEAR.getMilliseconds()) {
+            long amount = amount(timeAgo, TimeUnit.DAY);
+            return getTimeAgoComponent(amount, TimeUnit.DAY.getName(amount));
+        }
+        long amount = amount(timeAgo, TimeUnit.YEAR);
+        return getTimeAgoComponent(amount, TimeUnit.YEAR.getName(amount));
     }
 
-    private MutableComponent getTimeAgoComponent(double timeAgo, Component unit) {
-        return LanguageResolver.component("dologger.lookup.time.ago", String.format(Locale.ROOT, "%.2f", timeAgo), LanguageResolver.resolve("dologger.time.divider"), unit)
+    private static long amount(long timeAgo, TimeUnit unit) {
+        return Math.max(1L, timeAgo / unit.getMilliseconds());
+    }
+
+    private MutableComponent getTimeAgoComponent(long timeAgo, Component unit) {
+        return LanguageResolver.component("dologger.lookup.time.ago", Long.toString(timeAgo), unit)
                 .withStyle(Style.EMPTY
                         .withColor(ChatFormatting.GRAY)
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(new Date(time).toString()).withStyle(ChatFormatting.GRAY))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(ABSOLUTE_FORMAT.format(Instant.ofEpochMilli(time))).withStyle(ChatFormatting.GRAY))));
     }
 }

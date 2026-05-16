@@ -16,15 +16,20 @@
   "dologger.commands.page.out_of_bounds": "Page %s is out of bounds. Choose a page between 1 and %s.",
   "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled.",
 
+  "dologger.time.unit.second": "second",
+  "dologger.time.unit.second.plural": "seconds",
   "dologger.time.unit.minute": "minute",
+  "dologger.time.unit.minute.plural": "minutes",
   "dologger.time.unit.hour": "hour",
+  "dologger.time.unit.hour.plural": "hours",
   "dologger.time.unit.day": "day",
+  "dologger.time.unit.day.plural": "days",
   "dologger.time.unit.year": "year",
-  "dologger.time.divider": " ago (",
+  "dologger.time.unit.year.plural": "years",
 
   "dologger.lookup.position": "[%s, %s, %s]",
   "dologger.lookup.position.teleport": "Click to teleport",
-  "dologger.lookup.time.ago": "%s %s%s ago",
+  "dologger.lookup.time.ago": "%s %s ago",
 
   "dologger.action.break_block.past": "broken",
   "dologger.action.place_block.past": "placed",
