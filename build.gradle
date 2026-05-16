@@ -97,6 +97,9 @@ dependencies {
             prefer '5.1.0'
         }
     }
+    // Dev runtime classpath (runServer/runClient) — NeoForge ModDev needs this explicitly
+    additionalRuntimeClasspath 'org.postgresql:postgresql:42.7.5'
+    additionalRuntimeClasspath 'com.zaxxer:HikariCP:5.1.0'
 
 }
 
