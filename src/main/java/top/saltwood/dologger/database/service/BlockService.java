@@ -115,6 +115,70 @@ public class BlockService {
         }
     }
 
+    public List<BlockHistory> getRevertCandidates(Level level, List<Object> filters) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return blockRepository.getRevertCandidates(ServiceSupport.levelName(level), filters);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
+    }
+
+    public List<BlockHistory> getRestoreCandidates(Level level, List<Object> filters) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return blockRepository.getRestoreCandidates(ServiceSupport.levelName(level), filters);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
+    }
+
+    public boolean markReverted(int id, UUID actorUuid, long at, UUID batch) {
+        if (!ServiceSupport.canWrite()) {
+            ServiceSupport.logUnavailable();
+            return false;
+        }
+        try {
+            return blockRepository.markReverted(id, actorUuid, at, batch);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return false;
+        }
+    }
+
+    public boolean markRestored(int id, UUID actorUuid, long at, UUID batch) {
+        if (!ServiceSupport.canWrite()) {
+            ServiceSupport.logUnavailable();
+            return false;
+        }
+        try {
+            return blockRepository.markRestored(id, actorUuid, at, batch);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return false;
+        }
+    }
+
+    public boolean insertGeneratedBlock(ServerPlayer player, Level level, BlockPos pos, Block block, BlockAction action, int sourceBlockId) {
+        return insertGeneratedBlock(player.getUUID(), player.getGameProfile().getName(), level, pos, BuiltInRegistries.BLOCK.getKey(block).toString(), action, sourceBlockId);
+    }
+
+    public boolean insertGeneratedBlock(UUID userUuid, String username, Level level, BlockPos pos, String material, BlockAction action, int sourceBlockId) {
+        if (!prepareUserLevel(userUuid, username, level) || !materialService.ensure(material)) {
+            return false;
+        }
+        blockRepository.insertGeneratedMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action, sourceBlockId);
+        return true;
+    }
+
     public boolean removeInteractions(Level level, BlockPos pos) {
         if (!ServiceSupport.canWrite()) {
             ServiceSupport.logUnavailable();

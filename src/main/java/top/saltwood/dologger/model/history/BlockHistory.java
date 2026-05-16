@@ -20,18 +20,52 @@ import java.util.UUID;
 public class BlockHistory extends History {
 
     private final String material;
+    private final int id;
+    private final @Nullable Long revertedAt;
+    private final @Nullable Long restoredAt;
 
     public BlockHistory(long time, String name, @Nullable String uuid, int x, int y, int z, String material, int blockAction) {
         this(new Time(time), new User(name, uuid == null ? null : UUID.fromString(uuid)), new BlockPosition(x, y, z), material, BlockAction.fromId(blockAction));
     }
 
     public BlockHistory(Time time, User user, BlockPosition position, String material, BlockAction action) {
+        this(0, time, user, position, material, action, null, null);
+    }
+
+    public BlockHistory(int id, Time time, User user, BlockPosition position, String material, BlockAction action, @Nullable Long revertedAt, @Nullable Long restoredAt) {
         super(time, user, position, action);
+        this.id = id;
         this.material = material;
+        this.revertedAt = revertedAt;
+        this.restoredAt = restoredAt;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getMaterial() {
         return material;
+    }
+
+    public @Nullable Long getRevertedAt() {
+        return revertedAt;
+    }
+
+    public @Nullable Long getRestoredAt() {
+        return restoredAt;
+    }
+
+    public boolean isReverted() {
+        return revertedAt != null;
+    }
+
+    public boolean isRestored() {
+        return restoredAt != null;
+    }
+
+    public boolean isCurrentlyReverted() {
+        return isReverted() && !isRestored();
     }
 
     @Override

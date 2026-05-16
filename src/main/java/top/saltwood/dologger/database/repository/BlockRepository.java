@@ -21,12 +21,16 @@ public class BlockRepository {
             INSERT INTO blocks(time, user_id, level, x, y, z, type, action)
             VALUES(?, (SELECT id FROM users WHERE uuid = ?), (SELECT id FROM levels WHERE name = ?), ?, ?, ?, (SELECT id FROM materials WHERE name = ?), ?)
             """;
+    private static final String INSERT_GENERATED_MATERIAL_BLOCK = """
+            INSERT INTO blocks(time, user_id, level, x, y, z, type, action, command_generated, source_block_id)
+            VALUES(?, (SELECT id FROM users WHERE uuid = ?), (SELECT id FROM levels WHERE name = ?), ?, ?, ?, (SELECT id FROM materials WHERE name = ?), ?, true, ?)
+            """;
     private static final String INSERT_ENTITY_BLOCK = """
             INSERT INTO blocks(time, user_id, level, x, y, z, type, action)
             VALUES(?, (SELECT id FROM users WHERE uuid = ?), (SELECT id FROM levels WHERE name = ?), ?, ?, ?, (SELECT id FROM entities WHERE name = ?), ?)
             """;
     private static final String SELECT_BLOCK_HISTORY = """
-            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
@@ -35,7 +39,7 @@ public class BlockRepository {
             ORDER BY b.time DESC
             """;
     private static final String SELECT_INTERACTION_HISTORY = """
-            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
@@ -44,7 +48,7 @@ public class BlockRepository {
             ORDER BY b.time DESC
             """;
     private static final String SELECT_ENTITY_HISTORY = """
-            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, e.name AS material, b.action
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, e.name AS material, b.action, b.reverted_at, b.restored_at
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
@@ -57,7 +61,7 @@ public class BlockRepository {
             WHERE action = 2 AND level = (SELECT id FROM levels WHERE name = ?) AND x = ? AND y = ? AND z = ?
             """;
     private static final String SELECT_FILTERED = """
-            SELECT b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
@@ -73,6 +77,59 @@ public class BlockRepository {
             AND (? OR m.name = ANY(?::text[]))
             AND (? OR NOT (m.name = ANY(?::text[])))
             ORDER BY b.time DESC LIMIT 1000
+            """;
+    private static final String SELECT_REVERT_CANDIDATES = """
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
+            FROM blocks b
+            JOIN users u ON b.user_id = u.id
+            JOIN levels l ON b.level = l.id
+            JOIN materials m ON b.type = m.id
+            WHERE l.name = ?
+            AND b.action IN (0, 1)
+            AND b.command_generated = false
+            AND b.reverted_at IS NULL
+            AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
+            AND (? OR b.time >= ?)
+            AND (? OR b.time <= ?)
+            AND (? OR b.x BETWEEN ? AND ?)
+            AND (? OR b.y BETWEEN ? AND ?)
+            AND (? OR b.z BETWEEN ? AND ?)
+            AND (? OR b.action = ANY(?::integer[]))
+            AND (? OR m.name = ANY(?::text[]))
+            AND (? OR NOT (m.name = ANY(?::text[])))
+            ORDER BY b.time DESC, b.id DESC
+            """;
+    private static final String SELECT_RESTORE_CANDIDATES = """
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
+            FROM blocks b
+            JOIN users u ON b.user_id = u.id
+            JOIN levels l ON b.level = l.id
+            JOIN materials m ON b.type = m.id
+            WHERE l.name = ?
+            AND b.action IN (0, 1)
+            AND b.command_generated = false
+            AND b.reverted_at IS NOT NULL
+            AND b.restored_at IS NULL
+            AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
+            AND (? OR b.time >= ?)
+            AND (? OR b.time <= ?)
+            AND (? OR b.x BETWEEN ? AND ?)
+            AND (? OR b.y BETWEEN ? AND ?)
+            AND (? OR b.z BETWEEN ? AND ?)
+            AND (? OR b.action = ANY(?::integer[]))
+            AND (? OR m.name = ANY(?::text[]))
+            AND (? OR NOT (m.name = ANY(?::text[])))
+            ORDER BY b.time ASC, b.id ASC
+            """;
+    private static final String MARK_REVERTED = """
+            UPDATE blocks
+            SET reverted_at = ?, reverted_by = (SELECT id FROM users WHERE uuid = ?), revert_batch = ?
+            WHERE id = ? AND command_generated = false AND reverted_at IS NULL
+            """;
+    private static final String MARK_RESTORED = """
+            UPDATE blocks
+            SET restored_at = ?, restored_by = (SELECT id FROM users WHERE uuid = ?), restore_batch = ?
+            WHERE id = ? AND command_generated = false AND reverted_at IS NOT NULL AND restored_at IS NULL
             """;
 
     public void insertMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action) {
@@ -123,6 +180,30 @@ public class BlockRepository {
         }
     }
 
+    public List<BlockHistory> getRevertCandidates(String levelName, List<Object> filters) throws SQLException {
+        return queryCandidates(SELECT_REVERT_CANDIDATES, levelName, filters);
+    }
+
+    public List<BlockHistory> getRestoreCandidates(String levelName, List<Object> filters) throws SQLException {
+        return queryCandidates(SELECT_RESTORE_CANDIDATES, levelName, filters);
+    }
+
+    public boolean markReverted(int id, UUID actorUuid, long at, UUID batch) throws SQLException {
+        return mark(MARK_REVERTED, id, actorUuid, at, batch);
+    }
+
+    public boolean markRestored(int id, UUID actorUuid, long at, UUID batch) throws SQLException {
+        return mark(MARK_RESTORED, id, actorUuid, at, batch);
+    }
+
+    public void insertGeneratedMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action, int sourceBlockId) {
+        String materialName = MaterialRepository.stripMinecraftNamespace(material);
+        Dologger.getSqlQueue().enqueue(conn -> {
+            upsertNamed(conn, UPSERT_MATERIAL, materialName);
+            insertGenerated(conn, time, userUuid, levelName, x, y, z, materialName, action, sourceBlockId);
+        });
+    }
+
     private static void upsertNamed(Connection conn, String sql, String name) throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
@@ -140,6 +221,21 @@ public class BlockRepository {
             stmt.setInt(6, z);
             stmt.setString(7, type);
             stmt.setInt(8, action.getId());
+            stmt.executeUpdate();
+        }
+    }
+
+    private static void insertGenerated(Connection conn, long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action, int sourceBlockId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(INSERT_GENERATED_MATERIAL_BLOCK)) {
+            stmt.setLong(1, time);
+            stmt.setObject(2, userUuid);
+            stmt.setString(3, levelName);
+            stmt.setInt(4, x);
+            stmt.setInt(5, y);
+            stmt.setInt(6, z);
+            stmt.setString(7, material);
+            stmt.setInt(8, action.getId());
+            stmt.setInt(9, sourceBlockId);
             stmt.executeUpdate();
         }
     }
@@ -237,10 +333,36 @@ public class BlockRepository {
         }
     }
 
+    private static List<BlockHistory> queryCandidates(String sql, String levelName, List<Object> filters) throws SQLException {
+        Connection conn = Dologger.getDatabaseManager().getConnection();
+        try (conn; PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, levelName);
+            bindHistoryFilters(stmt, 2, filters, true);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapBlockHistory(rs);
+            }
+        }
+    }
+
+    private static boolean mark(String sql, int id, UUID actorUuid, long at, UUID batch) throws SQLException {
+        Connection conn = Dologger.getDatabaseManager().getConnection();
+        try (conn; PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, at);
+            stmt.setObject(2, actorUuid);
+            stmt.setObject(3, batch);
+            stmt.setInt(4, id);
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
     private static List<BlockHistory> mapBlockHistory(ResultSet rs) throws SQLException {
         List<BlockHistory> history = new ArrayList<>();
         while (rs.next()) {
-            history.add(new BlockHistory(RepositoryMappers.time(rs), RepositoryMappers.user(rs), RepositoryMappers.position(rs), rs.getString("material"), BlockAction.fromId(rs.getInt("action"))));
+            long revertedAt = rs.getLong("reverted_at");
+            Long nullableRevertedAt = rs.wasNull() ? null : revertedAt;
+            long restoredAt = rs.getLong("restored_at");
+            Long nullableRestoredAt = rs.wasNull() ? null : restoredAt;
+            history.add(new BlockHistory(rs.getInt("id"), RepositoryMappers.time(rs), RepositoryMappers.user(rs), RepositoryMappers.position(rs), rs.getString("material"), BlockAction.fromId(rs.getInt("action")), nullableRevertedAt, nullableRestoredAt));
         }
         return history;
     }
