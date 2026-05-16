@@ -11,7 +11,7 @@ public final class DoLoggerCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(root("grieflogger"));
+        dispatcher.register(root("dologger"));
         dispatcher.register(root("gl"));
     }
 
