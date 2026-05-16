@@ -14,6 +14,7 @@
   "dologger.commands.page.next": " [Next >]",
   "dologger.commands.page.info": " Page %s/%s ",
   "dologger.commands.page.out_of_bounds": "Page %s is out of bounds. Choose a page between 1 and %s.",
+  "dologger.commands.reload.success": "DoLogger config reloaded. Current language: %s.",
   "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled.",
 
   "dologger.time.unit.second": "second",
