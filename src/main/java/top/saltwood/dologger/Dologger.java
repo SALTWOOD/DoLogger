@@ -8,9 +8,11 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
+import top.saltwood.dologger.command.DoLoggerCommand;
 import top.saltwood.dologger.database.DatabaseManager;
 import top.saltwood.dologger.database.SqlQueue;
 import top.saltwood.dologger.database.service.Services;
@@ -42,6 +44,11 @@ public class Dologger
     private void commonSetup(final FMLCommonSetupEvent event)
     {
         LOGGER.info("DoLogger common setup");
+    }
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        DoLoggerCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent

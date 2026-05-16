@@ -1,1 +1,14 @@
-{}
+{
+  "dologger.commands.error.permission": "You do not have permission to use this command.",
+  "dologger.commands.error.players_only": "Only players can use this command.",
+  "dologger.commands.error.player_state_unavailable": "Player state is unavailable.",
+  "dologger.commands.inspect.enabled": "Inspect mode enabled.",
+  "dologger.commands.inspect.disabled": "Inspect mode disabled.",
+  "dologger.commands.lookup.parse_error": "%s",
+  "dologger.commands.lookup.no_results": "No results found.",
+  "dologger.commands.lookup.header": "--- Lookup Results (page %s/%s) ---",
+  "dologger.commands.lookup.footer": "Use /gl page <n> to view another page.",
+  "dologger.commands.page.no_results": "No lookup results to paginate.",
+  "dologger.commands.page.out_of_bounds": "Page %s is out of bounds. Choose a page between 1 and %s.",
+  "dologger.database.unavailable": "DoLogger database is unavailable; logging and lookup commands are disabled."
+}

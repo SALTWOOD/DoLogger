@@ -21,6 +21,7 @@ import top.saltwood.dologger.database.service.Services;
 import top.saltwood.dologger.event.BlockEvents;
 import top.saltwood.dologger.model.SimpleItemStack;
 import top.saltwood.dologger.model.action.ItemAction;
+import top.saltwood.dologger.model.history.IHistory;
 import top.saltwood.dologger.player.DoLoggerServerPlayer;
 
 import java.util.EnumMap;
@@ -35,6 +36,7 @@ public abstract class ServerPlayerMixin implements DoLoggerServerPlayer {
     @Unique private boolean dologger$inspecting = false;
     @Unique private ContainerTransactionManager dologger$containerTransactionManager;
     @Unique private Map<ItemAction, List<SimpleItemStack>> dologger$itemQueue = new HashMap<>();
+    @Unique private List<List<IHistory>> dologger$pages;
     @Unique private Level dologger$containerLevel;
     @Unique private BlockPos dologger$containerPos;
 
@@ -66,6 +68,16 @@ public abstract class ServerPlayerMixin implements DoLoggerServerPlayer {
     @Override
     public void dologger$setItemQueue(Map<ItemAction, List<SimpleItemStack>> queue) {
         dologger$itemQueue = queue == null ? new HashMap<>() : queue;
+    }
+
+    @Override
+    public List<List<IHistory>> dologger$getPages() {
+        return dologger$pages;
+    }
+
+    @Override
+    public void dologger$setPages(List<List<IHistory>> pages) {
+        dologger$pages = pages;
     }
 
     @Inject(method = "openMenu", at = @At("HEAD"))
