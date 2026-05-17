@@ -4,7 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import top.saltwood.dologger.database.repository.CommandRepository;
+import top.saltwood.dologger.model.history.CommandHistory;
 
+import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 public class CommandService {
@@ -28,5 +31,18 @@ public class CommandService {
         }
         commandRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), command);
         return true;
+    }
+
+    public List<CommandHistory> getFilteredCommandHistory(Level level, List<Object> filters) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return commandRepository.getFilteredCommandHistory(ServiceSupport.levelName(level), filters);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
     }
 }

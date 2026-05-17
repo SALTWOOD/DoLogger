@@ -4,7 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import top.saltwood.dologger.database.repository.ChatRepository;
+import top.saltwood.dologger.model.history.ChatHistory;
 
+import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 public class ChatService {
@@ -28,5 +31,18 @@ public class ChatService {
         }
         chatRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), message);
         return true;
+    }
+
+    public List<ChatHistory> getFilteredChatHistory(Level level, List<Object> filters) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return chatRepository.getFilteredChatHistory(ServiceSupport.levelName(level), filters);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
     }
 }

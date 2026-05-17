@@ -255,6 +255,16 @@ public class BlockRepository {
         }
     }
 
+    static void bindUserTimeRadiusFilters(PreparedStatement stmt, int start, List<Object> filters) throws SQLException {
+        int index = start;
+        index = bindUserFilter(stmt, index, value(filters, 0));
+        index = bindPair(stmt, index, value(filters, 1));
+        index = bindPair(stmt, index, value(filters, 2));
+        index = bindBetween(stmt, index, value(filters, 3), value(filters, 4));
+        index = bindBetween(stmt, index, value(filters, 5), value(filters, 6));
+        bindBetween(stmt, index, value(filters, 7), value(filters, 8));
+    }
+
     private static Object value(List<Object> filters, int index) {
         return filters != null && index < filters.size() ? filters.get(index) : null;
     }
