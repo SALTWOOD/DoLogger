@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import top.saltwood.dologger.Dologger;
 import top.saltwood.dologger.command.filter.FilterList;
 import top.saltwood.dologger.command.filter.FilterParseException;
@@ -189,15 +190,9 @@ public final class RestoreCommand {
                 .filter(entry -> pending.contains(entry.getId()))
                 .toList();
         for (BlockHistory entry : entries) {
-            RestoreResult result = restoreEntry(services, player, level, entry);
+            RestoreResult result = restoreEntry(services, player, level, entry, batch);
             switch (result) {
-                case SUCCESS -> {
-                    if (services.block().markRestored(entry.getId(), player.getUUID(), System.currentTimeMillis(), batch)) {
-                        success++;
-                    } else {
-                        conflict++;
-                    }
-                }
+                case SUCCESS -> success++;
                 case SKIPPED -> skipped++;
                 case CONFLICT -> conflict++;
             }
@@ -206,7 +201,7 @@ public final class RestoreCommand {
         return new RestoreCounts(success, skipped, conflict);
     }
 
-    private static RestoreResult restoreEntry(Services services, ServerPlayer player, Level level, BlockHistory entry) {
+    private static RestoreResult restoreEntry(Services services, ServerPlayer player, Level level, BlockHistory entry, UUID batch) {
         BlockPos pos = toBlockPos(entry.getPosition());
         if (entry.getAction() == BlockAction.PLACE_BLOCK) {
             if (!level.getBlockState(pos).isAir()) {
@@ -216,11 +211,12 @@ public final class RestoreCommand {
             if (loggedBlock == null || loggedBlock == Blocks.AIR || loggedBlock instanceof net.minecraft.world.level.block.EntityBlock) {
                 return RestoreResult.SKIPPED;
             }
-            if (!level.setBlockAndUpdate(pos, loggedBlock.defaultBlockState())) {
+            BlockState beforeState = level.getBlockState(pos);
+            BlockState targetState = loggedBlock.defaultBlockState();
+            if (!level.setBlockAndUpdate(pos, targetState)) {
                 return RestoreResult.CONFLICT;
             }
-            services.block().insertGeneratedBlock(player, level, pos, loggedBlock, BlockAction.PLACE_BLOCK, entry.getId());
-            return RestoreResult.SUCCESS;
+            return finishRestore(services, player, level, pos, beforeState, targetState, loggedBlock, BlockAction.PLACE_BLOCK, entry.getId(), batch);
         }
         if (entry.getAction() == BlockAction.BREAK_BLOCK) {
             Block loggedBlock = resolveBlock(entry.getMaterial());
@@ -231,13 +227,28 @@ public final class RestoreCommand {
             if (currentBlock != loggedBlock) {
                 return RestoreResult.CONFLICT;
             }
-            if (!level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState())) {
+            BlockState beforeState = level.getBlockState(pos);
+            BlockState targetState = Blocks.AIR.defaultBlockState();
+            if (!level.setBlockAndUpdate(pos, targetState)) {
                 return RestoreResult.CONFLICT;
             }
-            services.block().insertGeneratedBlock(player, level, pos, loggedBlock, BlockAction.BREAK_BLOCK, entry.getId());
-            return RestoreResult.SUCCESS;
+            return finishRestore(services, player, level, pos, beforeState, targetState, loggedBlock, BlockAction.BREAK_BLOCK, entry.getId(), batch);
         }
         return RestoreResult.SKIPPED;
+    }
+
+    private static RestoreResult finishRestore(Services services, ServerPlayer player, Level level, BlockPos pos, BlockState beforeState, BlockState targetState, Block loggedBlock, BlockAction generatedAction, int sourceBlockId, UUID batch) {
+        if (services.block().markRestoredWithGeneratedBlock(sourceBlockId, player.getUUID(), player.getGameProfile().getName(), level, pos, loggedBlock, generatedAction, System.currentTimeMillis(), batch)) {
+            return RestoreResult.SUCCESS;
+        }
+        rollbackWorld(level, pos, beforeState, targetState);
+        return RestoreResult.CONFLICT;
+    }
+
+    private static void rollbackWorld(Level level, BlockPos pos, BlockState beforeState, BlockState expectedState) {
+        if (level.getBlockState(pos).equals(expectedState)) {
+            level.setBlockAndUpdate(pos, beforeState);
+        }
     }
 
     private static BlockPos toBlockPos(BlockPosition position) {

@@ -17,6 +17,13 @@ public class BlockRepository {
 
     private static final String UPSERT_MATERIAL = "INSERT INTO materials(name) VALUES(?) " + SchemaCreator.onConflictDoNothing();
     private static final String UPSERT_ENTITY = "INSERT INTO entities(name) VALUES(?) " + SchemaCreator.onConflictDoNothing();
+    private static final String UPSERT_USER = """
+            INSERT INTO users(name, uuid) VALUES(?, ?)
+            """ + SchemaCreator.onConflictDoUpdate("uuid", "name = ?");
+    private static final String UPSERT_USERNAME = """
+            INSERT INTO usernames(time, uuid, name) VALUES(?, ?, ?)
+            """ + SchemaCreator.onConflictDoNothing();
+    private static final String UPSERT_LEVEL = "INSERT INTO levels(name) VALUES(?) " + SchemaCreator.onConflictDoNothing();
     private static final String INSERT_MATERIAL_BLOCK = """
             INSERT INTO blocks(time, user_id, level, x, y, z, type, action)
             VALUES(?, (SELECT id FROM users WHERE uuid = ?), (SELECT id FROM levels WHERE name = ?), ?, ?, ?, (SELECT id FROM materials WHERE name = ?), ?)
@@ -197,6 +204,14 @@ public class BlockRepository {
         return mark(MARK_RESTORED, id, actorUuid, at, batch);
     }
 
+    public boolean markRevertedWithGeneratedMaterial(int id, UUID actorUuid, String actorName, long at, UUID batch, String levelName, int x, int y, int z, String material, BlockAction generatedAction) throws SQLException {
+        return markWithGeneratedMaterial(MARK_REVERTED, id, actorUuid, actorName, at, batch, levelName, x, y, z, material, generatedAction);
+    }
+
+    public boolean markRestoredWithGeneratedMaterial(int id, UUID actorUuid, String actorName, long at, UUID batch, String levelName, int x, int y, int z, String material, BlockAction generatedAction) throws SQLException {
+        return markWithGeneratedMaterial(MARK_RESTORED, id, actorUuid, actorName, at, batch, levelName, x, y, z, material, generatedAction);
+    }
+
     public void insertGeneratedMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action, int sourceBlockId) {
         String materialName = MaterialRepository.stripMinecraftNamespace(material);
         Dologger.getSqlQueue().enqueue(conn -> {
@@ -358,6 +373,56 @@ public class BlockRepository {
     private static boolean mark(String sql, int id, UUID actorUuid, long at, UUID batch) throws SQLException {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, at);
+            stmt.setObject(2, actorUuid);
+            stmt.setObject(3, batch);
+            stmt.setInt(4, id);
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
+    private static boolean markWithGeneratedMaterial(String markSql, int id, UUID actorUuid, String actorName, long at, UUID batch, String levelName, int x, int y, int z, String material, BlockAction generatedAction) throws SQLException {
+        String materialName = MaterialRepository.stripMinecraftNamespace(material);
+        Connection conn = Dologger.getDatabaseManager().getConnection();
+        boolean originalAutoCommit = conn.getAutoCommit();
+        try {
+            conn.setAutoCommit(false);
+            upsertUser(conn, actorName, actorUuid, at);
+            upsertNamed(conn, UPSERT_LEVEL, levelName);
+            upsertNamed(conn, UPSERT_MATERIAL, materialName);
+            if (!markInTransaction(conn, markSql, id, actorUuid, at, batch)) {
+                conn.rollback();
+                return false;
+            }
+            insertGenerated(conn, at, actorUuid, levelName, x, y, z, materialName, generatedAction, id);
+            conn.commit();
+            return true;
+        } catch (SQLException exception) {
+            conn.rollback();
+            throw exception;
+        } finally {
+            conn.setAutoCommit(originalAutoCommit);
+            conn.close();
+        }
+    }
+
+    private static void upsertUser(Connection conn, String name, UUID uuid, long at) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(UPSERT_USER)) {
+            stmt.setString(1, name);
+            stmt.setObject(2, uuid);
+            stmt.setString(3, name);
+            stmt.executeUpdate();
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(UPSERT_USERNAME)) {
+            stmt.setLong(1, at);
+            stmt.setObject(2, uuid);
+            stmt.setString(3, name);
+            stmt.executeUpdate();
+        }
+    }
+
+    private static boolean markInTransaction(Connection conn, String sql, int id, UUID actorUuid, long at, UUID batch) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, at);
             stmt.setObject(2, actorUuid);
             stmt.setObject(3, batch);

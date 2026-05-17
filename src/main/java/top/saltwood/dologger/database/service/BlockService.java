@@ -167,6 +167,14 @@ public class BlockService {
         }
     }
 
+    public boolean markRevertedWithGeneratedBlock(int id, UUID actorUuid, String username, Level level, BlockPos pos, Block block, BlockAction generatedAction, long at, UUID batch) {
+        return markWithGeneratedBlock(true, id, actorUuid, username, level, pos, block, generatedAction, at, batch);
+    }
+
+    public boolean markRestoredWithGeneratedBlock(int id, UUID actorUuid, String username, Level level, BlockPos pos, Block block, BlockAction generatedAction, long at, UUID batch) {
+        return markWithGeneratedBlock(false, id, actorUuid, username, level, pos, block, generatedAction, at, batch);
+    }
+
     public boolean insertGeneratedBlock(ServerPlayer player, Level level, BlockPos pos, Block block, BlockAction action, int sourceBlockId) {
         return insertGeneratedBlock(player.getUUID(), player.getGameProfile().getName(), level, pos, BuiltInRegistries.BLOCK.getKey(block).toString(), action, sourceBlockId);
     }
@@ -177,6 +185,23 @@ public class BlockService {
         }
         blockRepository.insertGeneratedMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action, sourceBlockId);
         return true;
+    }
+
+    private boolean markWithGeneratedBlock(boolean revert, int id, UUID actorUuid, String username, Level level, BlockPos pos, Block block, BlockAction generatedAction, long at, UUID batch) {
+        if (!ServiceSupport.canWrite()) {
+            ServiceSupport.logUnavailable();
+            return false;
+        }
+        String material = BuiltInRegistries.BLOCK.getKey(block).toString();
+        try {
+            if (revert) {
+                return blockRepository.markRevertedWithGeneratedMaterial(id, actorUuid, username, at, batch, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, generatedAction);
+            }
+            return blockRepository.markRestoredWithGeneratedMaterial(id, actorUuid, username, at, batch, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, generatedAction);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return false;
+        }
     }
 
     public boolean removeInteractions(Level level, BlockPos pos) {

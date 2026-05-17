@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import top.saltwood.dologger.Dologger;
@@ -189,15 +190,9 @@ public final class RevertCommand {
                 .filter(entry -> pending.contains(entry.getId()))
                 .toList();
         for (BlockHistory entry : entries) {
-            RevertResult result = revertEntry(services, player, level, entry);
+            RevertResult result = revertEntry(services, player, level, entry, batch);
             switch (result) {
-                case SUCCESS -> {
-                    if (services.block().markReverted(entry.getId(), player.getUUID(), System.currentTimeMillis(), batch)) {
-                        success++;
-                    } else {
-                        conflict++;
-                    }
-                }
+                case SUCCESS -> success++;
                 case SKIPPED -> skipped++;
                 case CONFLICT -> conflict++;
             }
@@ -206,7 +201,7 @@ public final class RevertCommand {
         return new RevertCounts(success, skipped, conflict);
     }
 
-    private static RevertResult revertEntry(Services services, ServerPlayer player, Level level, BlockHistory entry) {
+    private static RevertResult revertEntry(Services services, ServerPlayer player, Level level, BlockHistory entry, UUID batch) {
         BlockPos pos = toBlockPos(entry.getPosition());
         if (entry.getAction() == BlockAction.PLACE_BLOCK) {
             Block loggedBlock = resolveBlock(entry.getMaterial());
@@ -217,11 +212,12 @@ public final class RevertCommand {
             if (currentBlock != loggedBlock) {
                 return RevertResult.CONFLICT;
             }
-            if (!level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState())) {
+            BlockState beforeState = level.getBlockState(pos);
+            BlockState targetState = Blocks.AIR.defaultBlockState();
+            if (!level.setBlockAndUpdate(pos, targetState)) {
                 return RevertResult.CONFLICT;
             }
-            services.block().insertGeneratedBlock(player, level, pos, loggedBlock, BlockAction.BREAK_BLOCK, entry.getId());
-            return RevertResult.SUCCESS;
+            return finishRevert(services, player, level, pos, beforeState, targetState, loggedBlock, BlockAction.BREAK_BLOCK, entry.getId(), batch);
         }
         if (entry.getAction() == BlockAction.BREAK_BLOCK) {
             if (!level.getBlockState(pos).isAir()) {
@@ -231,13 +227,28 @@ public final class RevertCommand {
             if (loggedBlock == null || loggedBlock == Blocks.AIR || loggedBlock instanceof net.minecraft.world.level.block.EntityBlock) {
                 return RevertResult.SKIPPED;
             }
-            if (!level.setBlockAndUpdate(pos, loggedBlock.defaultBlockState())) {
+            BlockState beforeState = level.getBlockState(pos);
+            BlockState targetState = loggedBlock.defaultBlockState();
+            if (!level.setBlockAndUpdate(pos, targetState)) {
                 return RevertResult.CONFLICT;
             }
-            services.block().insertGeneratedBlock(player, level, pos, loggedBlock, BlockAction.PLACE_BLOCK, entry.getId());
-            return RevertResult.SUCCESS;
+            return finishRevert(services, player, level, pos, beforeState, targetState, loggedBlock, BlockAction.PLACE_BLOCK, entry.getId(), batch);
         }
         return RevertResult.SKIPPED;
+    }
+
+    private static RevertResult finishRevert(Services services, ServerPlayer player, Level level, BlockPos pos, BlockState beforeState, BlockState targetState, Block loggedBlock, BlockAction generatedAction, int sourceBlockId, UUID batch) {
+        if (services.block().markRevertedWithGeneratedBlock(sourceBlockId, player.getUUID(), player.getGameProfile().getName(), level, pos, loggedBlock, generatedAction, System.currentTimeMillis(), batch)) {
+            return RevertResult.SUCCESS;
+        }
+        rollbackWorld(level, pos, beforeState, targetState);
+        return RevertResult.CONFLICT;
+    }
+
+    private static void rollbackWorld(Level level, BlockPos pos, BlockState beforeState, BlockState expectedState) {
+        if (level.getBlockState(pos).equals(expectedState)) {
+            level.setBlockAndUpdate(pos, beforeState);
+        }
     }
 
     private static BlockPos toBlockPos(BlockPosition position) {
