@@ -20,7 +20,9 @@ public class LevelService extends NamedIdCacheService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        levelRepository.insert(name);
+        if (!levelRepository.insert(name)) {
+            return false;
+        }
         rememberPending(name);
         return true;
     }

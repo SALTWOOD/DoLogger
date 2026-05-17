@@ -12,8 +12,8 @@ public class UsernameRepository {
             INSERT INTO usernames(time, uuid, name) VALUES(?, ?, ?)
             """ + SchemaCreator.onConflictDoNothing();
 
-    public void insert(long time, UUID uuid, String name) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insert(long time, UUID uuid, String name) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
                 stmt.setLong(1, time);
                 stmt.setObject(2, uuid);

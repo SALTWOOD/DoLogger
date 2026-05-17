@@ -23,8 +23,8 @@ public class UserRepository {
 
     private static final String SELECT_ALL_USERNAMES = "SELECT id, name FROM users";
 
-    public void insertOrUpdateName(String name, UUID uuid) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insertOrUpdateName(String name, UUID uuid) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_OR_UPDATE_NAME)) {
                 stmt.setString(1, name);
                 stmt.setObject(2, uuid);
@@ -34,8 +34,8 @@ public class UserRepository {
         });
     }
 
-    public void insertNonPlayer(String name) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insertNonPlayer(String name) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_NON_PLAYER)) {
                 stmt.setString(1, name);
                 stmt.executeUpdate();

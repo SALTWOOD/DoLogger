@@ -34,8 +34,8 @@ public class SessionRepository {
             ORDER BY s.time DESC LIMIT 1000
             """;
 
-    public void insert(long time, UUID userUuid, String levelName, int x, int y, int z, SessionAction action) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insert(long time, UUID userUuid, String levelName, int x, int y, int z, SessionAction action) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
                 stmt.setLong(1, time);
                 stmt.setObject(2, userUuid);

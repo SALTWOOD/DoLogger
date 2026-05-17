@@ -40,26 +40,26 @@ public class ItemRepository {
             ORDER BY i.time DESC LIMIT 1000
             """;
 
-    public void insert(long time, UUID userUuid, String level, int x, int y, int z, SimpleItemStack item, ItemAction action) {
-        Dologger.getSqlQueue().enqueue(conn -> insertOne(conn, time, userUuid, level, x, y, z, item, action));
+    public boolean insert(long time, UUID userUuid, String level, int x, int y, int z, SimpleItemStack item, ItemAction action) {
+        return Dologger.getSqlQueue().enqueue(conn -> insertOne(conn, time, userUuid, level, x, y, z, item, action));
     }
 
-    public void insertList(long time, UUID userUuid, String level, int x, int y, int z, List<SimpleItemStack> items, ItemAction action) {
+    public boolean insertList(long time, UUID userUuid, String level, int x, int y, int z, List<SimpleItemStack> items, ItemAction action) {
         List<SqlQueue.SqlTask> tasks = new ArrayList<>();
         for (SimpleItemStack item : items) {
             tasks.add(conn -> insertOne(conn, time, userUuid, level, x, y, z, item, action));
         }
-        Dologger.getSqlQueue().enqueueSqlBatch(tasks);
+        return Dologger.getSqlQueue().enqueueSqlBatch(tasks) == tasks.size();
     }
 
-    public void insertMap(long time, UUID userUuid, String level, int x, int y, int z, Map<ItemAction, List<SimpleItemStack>> map) {
+    public boolean insertMap(long time, UUID userUuid, String level, int x, int y, int z, Map<ItemAction, List<SimpleItemStack>> map) {
         List<SqlQueue.SqlTask> tasks = new ArrayList<>();
         for (Map.Entry<ItemAction, List<SimpleItemStack>> entry : map.entrySet()) {
             for (SimpleItemStack item : entry.getValue()) {
                 tasks.add(conn -> insertOne(conn, time, userUuid, level, x, y, z, item, entry.getKey()));
             }
         }
-        Dologger.getSqlQueue().enqueueSqlBatch(tasks);
+        return Dologger.getSqlQueue().enqueueSqlBatch(tasks) == tasks.size();
     }
 
     public List<ItemHistory> getFilteredItemHistory(String level, List<Object> filters) throws SQLException {

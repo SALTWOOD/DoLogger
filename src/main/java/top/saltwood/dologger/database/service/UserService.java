@@ -30,8 +30,9 @@ public class UserService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        userRepository.insertOrUpdateName(name, uuid);
-        usernameRepository.insert(System.currentTimeMillis(), uuid, name);
+        if (!userRepository.insertOrUpdateName(name, uuid) || !usernameRepository.insert(System.currentTimeMillis(), uuid, name)) {
+            return false;
+        }
         userIds.remove(uuid);
         return true;
     }
@@ -41,8 +42,7 @@ public class UserService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        userRepository.insertNonPlayer(name);
-        return true;
+        return userRepository.insertNonPlayer(name);
     }
 
     public Integer getId(UUID uuid) {

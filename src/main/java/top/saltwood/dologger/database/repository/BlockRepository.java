@@ -170,16 +170,16 @@ public class BlockRepository {
             WHERE id = ? AND command_generated = false AND reverted_at IS NOT NULL AND restored_at IS NULL
             """;
 
-    public void insertMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action) {
+    public boolean insertMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action) {
         String materialName = MaterialRepository.stripMinecraftNamespace(material);
-        Dologger.getSqlQueue().enqueue(conn -> {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             upsertNamed(conn, UPSERT_MATERIAL, materialName);
             insert(conn, INSERT_MATERIAL_BLOCK, time, userUuid, levelName, x, y, z, materialName, action);
         });
     }
 
-    public void insertEntity(long time, UUID userUuid, String levelName, int x, int y, int z, String entity, BlockAction action) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insertEntity(long time, UUID userUuid, String levelName, int x, int y, int z, String entity, BlockAction action) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             upsertNamed(conn, UPSERT_ENTITY, entity);
             insert(conn, INSERT_ENTITY_BLOCK, time, userUuid, levelName, x, y, z, entity, action);
         });
@@ -195,8 +195,8 @@ public class BlockRepository {
         return history;
     }
 
-    public void removeInteractionsForPosition(String levelName, int x, int y, int z) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean removeInteractionsForPosition(String levelName, int x, int y, int z) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(DELETE_INTERACTIONS)) {
                 stmt.setString(1, levelName);
                 stmt.setInt(2, x);
@@ -250,9 +250,9 @@ public class BlockRepository {
         return markWithGeneratedMaterial(MARK_RESTORED, id, actorUuid, actorName, at, batch, levelName, x, y, z, material, generatedAction);
     }
 
-    public void insertGeneratedMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action, int sourceBlockId) {
+    public boolean insertGeneratedMaterial(long time, UUID userUuid, String levelName, int x, int y, int z, String material, BlockAction action, int sourceBlockId) {
         String materialName = MaterialRepository.stripMinecraftNamespace(material);
-        Dologger.getSqlQueue().enqueue(conn -> {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             upsertNamed(conn, UPSERT_MATERIAL, materialName);
             insertGenerated(conn, time, userUuid, levelName, x, y, z, materialName, action, sourceBlockId);
         });

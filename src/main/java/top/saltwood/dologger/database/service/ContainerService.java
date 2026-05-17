@@ -35,8 +35,7 @@ public class ContainerService {
         if (item == null || item.isEmpty() || !prepare(userUuid, username, level, item)) {
             return false;
         }
-        containerRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), item, action);
-        return true;
+        return containerRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), item, action);
     }
 
     public boolean insertList(UUID userUuid, String username, Level level, BlockPos pos, List<SimpleItemStack> items, ItemAction action) {
@@ -44,8 +43,7 @@ public class ContainerService {
         if (filtered.isEmpty() || !prepare(userUuid, username, level, filtered)) {
             return false;
         }
-        containerRepository.insertList(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), filtered, action);
-        return true;
+        return containerRepository.insertList(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), filtered, action);
     }
 
     public boolean insertMap(UUID userUuid, String username, Level level, BlockPos pos, Map<ItemAction, List<SimpleItemStack>> map) {
@@ -53,8 +51,7 @@ public class ContainerService {
             return false;
         }
         map.values().forEach(items -> items.forEach(item -> materialService.ensure(ServiceSupport.itemName(item.toItemStack()))));
-        containerRepository.insertMap(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), map);
-        return true;
+        return containerRepository.insertMap(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), map);
     }
 
     public List<ContainerHistory> getHistory(Level level, BlockPos pos) {

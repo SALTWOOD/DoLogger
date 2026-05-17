@@ -32,8 +32,8 @@ public class ChatRepository {
             ORDER BY c.time DESC LIMIT 1000
             """;
 
-    public void insert(long time, UUID userUuid, String levelName, int x, int y, int z, String message) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insert(long time, UUID userUuid, String levelName, int x, int y, int z, String message) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
                 stmt.setLong(1, time);
                 stmt.setObject(2, userUuid);

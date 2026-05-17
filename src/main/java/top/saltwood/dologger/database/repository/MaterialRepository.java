@@ -11,8 +11,8 @@ public class MaterialRepository {
             INSERT INTO materials(name) VALUES(?)
             """ + SchemaCreator.onConflictDoNothing();
 
-    public void insert(String name) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insert(String name) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
                 stmt.setString(1, stripMinecraftNamespace(name));
                 stmt.executeUpdate();

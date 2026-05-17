@@ -32,8 +32,8 @@ public class CommandRepository {
             ORDER BY c.time DESC LIMIT 1000
             """;
 
-    public void insert(long time, UUID userUuid, String levelName, int x, int y, int z, String command) {
-        Dologger.getSqlQueue().enqueue(conn -> {
+    public boolean insert(long time, UUID userUuid, String levelName, int x, int y, int z, String command) {
+        return Dologger.getSqlQueue().enqueue(conn -> {
             try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
                 stmt.setLong(1, time);
                 stmt.setObject(2, userUuid);

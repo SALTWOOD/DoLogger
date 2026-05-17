@@ -20,7 +20,9 @@ public class EntityService extends NamedIdCacheService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        entityRepository.insert(name);
+        if (!entityRepository.insert(name)) {
+            return false;
+        }
         rememberPending(name);
         return true;
     }

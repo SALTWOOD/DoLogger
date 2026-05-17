@@ -29,8 +29,7 @@ public class CommandService {
         if (command == null || !userService.ensure(userUuid, username) || !levelService.ensure(level)) {
             return false;
         }
-        commandRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), command);
-        return true;
+        return commandRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), command);
     }
 
     public List<CommandHistory> getFilteredCommandHistory(Level level, List<Object> filters) {

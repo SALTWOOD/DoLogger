@@ -15,8 +15,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SqlQueue {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final long POLL_TIMEOUT_MS = 100L;
+    private static final long BUSY_LOG_INTERVAL_MS = 10_000L;
 
-    private final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Runnable> queue;
     private final DatabaseManager databaseManager;
     private final Thread workerThread;
     private final AtomicBoolean accepting = new AtomicBoolean(true);
@@ -24,9 +25,12 @@ public class SqlQueue {
     private final AtomicBoolean processingTask = new AtomicBoolean(false);
     private final AtomicLong completedTasks = new AtomicLong();
     private final AtomicLong failedTasks = new AtomicLong();
+    private final AtomicLong rejectedTasks = new AtomicLong();
+    private final AtomicLong nextBusyLogAt = new AtomicLong();
 
     public SqlQueue(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
+        this.queue = new LinkedBlockingQueue<>(Math.max(1, Config.queueCapacity));
         this.workerThread = new Thread(this::processQueue, "DoLogger-SQL-Queue");
         this.workerThread.setDaemon(true);
     }
@@ -46,11 +50,23 @@ public class SqlQueue {
         }
 
         if (!databaseManager.isAvailable()) {
-            databaseManager.logBoundedError("Database unavailable, dropping queued task");
+            rejectedTasks.incrementAndGet();
+            databaseManager.logBoundedError("Database unavailable, rejecting queued task");
             return false;
         }
 
-        return queue.offer(task);
+        if (isBusy()) {
+            rejectedTasks.incrementAndGet();
+            logBusy(1);
+            return false;
+        }
+
+        boolean accepted = queue.offer(task);
+        if (!accepted) {
+            rejectedTasks.incrementAndGet();
+            logBusy(1);
+        }
+        return accepted;
     }
 
     public boolean enqueue(SqlTask task) {
@@ -71,13 +87,28 @@ public class SqlQueue {
         }
 
         if (!databaseManager.isAvailable()) {
-            databaseManager.logBoundedError("Database unavailable, dropping batch of " + tasks.size() + " tasks");
+            rejectedTasks.addAndGet(tasks.size());
+            databaseManager.logBoundedError("Database unavailable, rejecting batch of " + tasks.size() + " tasks");
             return 0;
         }
 
         int added = 0;
         synchronized (queue) {
             if (!accepting.get()) {
+                return 0;
+            }
+
+            int taskCount = 0;
+            for (Runnable task : tasks) {
+                if (task == null) {
+                    continue;
+                }
+                taskCount++;
+            }
+
+            if (queue.size() + taskCount > busyThreshold()) {
+                rejectedTasks.addAndGet(taskCount);
+                logBusy(taskCount);
                 return 0;
             }
 
@@ -139,12 +170,34 @@ public class SqlQueue {
                 failedTasks.get(),
                 dropped
         );
+        LOGGER.info("DoLogger: SQL queue rejected {} tasks while running", rejectedTasks.get());
 
         return dropped;
     }
 
     public int getPendingCount() {
         return queue.size();
+    }
+
+    public boolean isBusy() {
+        return queue.size() >= busyThreshold();
+    }
+
+    public long getRejectedCount() {
+        return rejectedTasks.get();
+    }
+
+    private int busyThreshold() {
+        return Math.max(1, Math.min(Config.queueBusyThreshold, Config.queueCapacity));
+    }
+
+    private void logBusy(int tasks) {
+        long now = System.currentTimeMillis();
+        long next = nextBusyLogAt.get();
+        if (now < next || !nextBusyLogAt.compareAndSet(next, now + BUSY_LOG_INTERVAL_MS)) {
+            return;
+        }
+        databaseManager.logBoundedError("SQL queue busy, rejecting " + tasks + " async task(s); pending=" + queue.size() + ", threshold=" + busyThreshold());
     }
 
     private void processQueue() {

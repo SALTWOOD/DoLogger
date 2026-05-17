@@ -61,6 +61,14 @@ public class Config {
             .comment("Queue flush timeout on server stop in milliseconds")
             .defineInRange("queueFlushTimeout", 10000, 1000, 60000);
 
+    public static final ModConfigSpec.IntValue QUEUE_CAPACITY = BUILDER
+            .comment("Maximum number of pending asynchronous SQL tasks kept in memory")
+            .defineInRange("queueCapacity", 10000, 1, 1000000);
+
+    public static final ModConfigSpec.IntValue QUEUE_BUSY_THRESHOLD = BUILDER
+            .comment("Pending asynchronous SQL tasks at or above this value make DoLogger reject new async writes as busy")
+            .defineInRange("queueBusyThreshold", 9000, 1, 1000000);
+
     public static final ModConfigSpec.IntValue PAGE_SIZE = BUILDER
             .comment("Maximum number of entries per lookup page")
             .defineInRange("pageSize", 10, 1, 100);
@@ -88,6 +96,8 @@ public class Config {
     public static int idleTimeout;
     public static int maxLifetime;
     public static int queueFlushTimeout;
+    public static int queueCapacity;
+    public static int queueBusyThreshold;
     public static int pageSize;
     public static int purgeRetentionDays;
     public static int maxRevertRestorePlanSize;
@@ -111,6 +121,8 @@ public class Config {
         idleTimeout = IDLE_TIMEOUT.get();
         maxLifetime = MAX_LIFETIME.get();
         queueFlushTimeout = QUEUE_FLUSH_TIMEOUT.get();
+        queueCapacity = QUEUE_CAPACITY.get();
+        queueBusyThreshold = QUEUE_BUSY_THRESHOLD.get();
         pageSize = PAGE_SIZE.get();
         purgeRetentionDays = PURGE_RETENTION_DAYS.get();
         maxRevertRestorePlanSize = MAX_REVERT_RESTORE_PLAN_SIZE.get();

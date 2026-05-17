@@ -21,7 +21,9 @@ public class MaterialService extends NamedIdCacheService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        materialRepository.insert(normalized);
+        if (!materialRepository.insert(normalized)) {
+            return false;
+        }
         rememberPending(normalized);
         return true;
     }

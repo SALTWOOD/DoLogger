@@ -40,8 +40,7 @@ public class BlockService {
         if (!prepareUserLevel(userUuid, username, level) || !materialService.ensure(material)) {
             return false;
         }
-        blockRepository.insertMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action);
-        return true;
+        return blockRepository.insertMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action);
     }
 
     public boolean insertEntity(ServerPlayer player, Level level, BlockPos pos, Entity entity, BlockAction action) {
@@ -56,8 +55,7 @@ public class BlockService {
         if (!prepareUserLevel(userUuid, username, level) || !entityService.ensure(entity)) {
             return false;
         }
-        blockRepository.insertEntity(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), entity, action);
-        return true;
+        return blockRepository.insertEntity(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), entity, action);
     }
 
     public List<BlockHistory> getBlockHistory(Level level, BlockPos pos) {
@@ -209,8 +207,7 @@ public class BlockService {
         if (!prepareUserLevel(userUuid, username, level) || !materialService.ensure(material)) {
             return false;
         }
-        blockRepository.insertGeneratedMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action, sourceBlockId);
-        return true;
+        return blockRepository.insertGeneratedMaterial(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), material, action, sourceBlockId);
     }
 
     private boolean markWithGeneratedBlock(boolean revert, int id, UUID actorUuid, String username, Level level, BlockPos pos, Block block, BlockAction generatedAction, long at, UUID batch) {
@@ -235,8 +232,7 @@ public class BlockService {
             ServiceSupport.logUnavailable();
             return false;
         }
-        blockRepository.removeInteractionsForPosition(ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ());
-        return true;
+        return blockRepository.removeInteractionsForPosition(ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ());
     }
 
     private boolean prepareUserLevel(UUID userUuid, String username, Level level) {

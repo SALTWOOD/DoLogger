@@ -30,8 +30,7 @@ public class SessionService {
         if (!userService.ensure(userUuid, username) || !levelService.ensure(level)) {
             return false;
         }
-        sessionRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), action);
-        return true;
+        return sessionRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), action);
     }
 
     public List<SessionHistory> getFilteredSessionHistory(Level level, List<Object> filters) {

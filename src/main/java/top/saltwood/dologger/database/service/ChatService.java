@@ -29,8 +29,7 @@ public class ChatService {
         if (message == null || !userService.ensure(userUuid, username) || !levelService.ensure(level)) {
             return false;
         }
-        chatRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), message);
-        return true;
+        return chatRepository.insert(System.currentTimeMillis(), userUuid, ServiceSupport.levelName(level), pos.getX(), pos.getY(), pos.getZ(), message);
     }
 
     public List<ChatHistory> getFilteredChatHistory(Level level, List<Object> filters) {
