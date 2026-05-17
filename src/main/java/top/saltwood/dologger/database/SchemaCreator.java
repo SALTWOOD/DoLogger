@@ -107,7 +107,7 @@ public class SchemaCreator {
                     revert_batch uuid NULL,
                     restore_batch uuid NULL,
                     command_generated boolean NOT NULL DEFAULT false,
-                    source_block_id integer NULL REFERENCES blocks(id)
+                    source_block_id integer NULL REFERENCES blocks(id) ON DELETE SET NULL
                 )
                 """);
         stmt.execute("""
