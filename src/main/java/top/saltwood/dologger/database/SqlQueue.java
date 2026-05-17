@@ -18,6 +18,7 @@ public class SqlQueue {
     private static final long BUSY_LOG_INTERVAL_MS = 10_000L;
 
     private final LinkedBlockingQueue<Runnable> queue;
+    private final Object producerLock = new Object();
     private final DatabaseManager databaseManager;
     private final Thread workerThread;
     private final AtomicBoolean accepting = new AtomicBoolean(true);
@@ -45,28 +46,25 @@ public class SqlQueue {
             return false;
         }
 
-        if (!accepting.get()) {
-            return false;
-        }
+        synchronized (producerLock) {
+            if (!accepting.get()) {
+                return false;
+            }
 
-        if (!databaseManager.isAvailable()) {
-            rejectedTasks.incrementAndGet();
-            databaseManager.logBoundedError("Database unavailable, rejecting queued task");
-            return false;
-        }
+            if (!databaseManager.isAvailable()) {
+                rejectedTasks.incrementAndGet();
+                databaseManager.logBoundedError("Database unavailable, rejecting queued task");
+                return false;
+            }
 
-        if (isBusy()) {
-            rejectedTasks.incrementAndGet();
-            logBusy(1);
-            return false;
-        }
+            if (queue.size() + 1 > busyThreshold() || queue.remainingCapacity() < 1) {
+                rejectedTasks.incrementAndGet();
+                logBusy(1);
+                return false;
+            }
 
-        boolean accepted = queue.offer(task);
-        if (!accepted) {
-            rejectedTasks.incrementAndGet();
-            logBusy(1);
+            return queue.offer(task);
         }
-        return accepted;
     }
 
     public boolean enqueue(SqlTask task) {
@@ -82,19 +80,14 @@ public class SqlQueue {
             return 0;
         }
 
-        if (!accepting.get()) {
-            return 0;
-        }
-
-        if (!databaseManager.isAvailable()) {
-            rejectedTasks.addAndGet(tasks.size());
-            databaseManager.logBoundedError("Database unavailable, rejecting batch of " + tasks.size() + " tasks");
-            return 0;
-        }
-
-        int added = 0;
-        synchronized (queue) {
+        synchronized (producerLock) {
             if (!accepting.get()) {
+                return 0;
+            }
+
+            if (!databaseManager.isAvailable()) {
+                rejectedTasks.addAndGet(tasks.size());
+                databaseManager.logBoundedError("Database unavailable, rejecting batch of " + tasks.size() + " tasks");
                 return 0;
             }
 
@@ -106,12 +99,17 @@ public class SqlQueue {
                 taskCount++;
             }
 
-            if (queue.size() + taskCount > busyThreshold()) {
+            if (taskCount == 0) {
+                return 0;
+            }
+
+            if (queue.size() + taskCount > busyThreshold() || queue.remainingCapacity() < taskCount) {
                 rejectedTasks.addAndGet(taskCount);
                 logBusy(taskCount);
                 return 0;
             }
 
+            int added = 0;
             for (Runnable task : tasks) {
                 if (task == null) {
                     continue;
@@ -121,9 +119,9 @@ public class SqlQueue {
                     added++;
                 }
             }
-        }
 
-        return added;
+            return added;
+        }
     }
 
     public int enqueueSqlBatch(List<SqlTask> tasks) {

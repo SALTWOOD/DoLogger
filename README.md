@@ -64,7 +64,10 @@ Main config keys in `config/dologger-common.toml`:
 | `idleTimeout` | `600000` | HikariCP idle timeout in milliseconds. |
 | `maxLifetime` | `1800000` | HikariCP max lifetime in milliseconds. |
 | `queueFlushTimeout` | `10000` | Maximum queue flush time during server stop, in milliseconds. |
+| `queueCapacity` | `10000` | Maximum number of asynchronous database tasks kept in memory. |
+| `queueBusyThreshold` | `9000` | Rejects new asynchronous database tasks once the queue reaches this many pending tasks. |
 | `pageSize` | `10` | Number of lookup entries per page. |
+| `maxRevertRestorePlanSize` | `1000` | Default maximum number of rows selected by revert/restore preview when no `limit.` filter is provided. |
 | `purgeRetentionDays` | `0` | Deletes history older than this many days on database startup. `0` disables automatic purge. |
 
 Use `/dologger reload` after changing reloadable config values. NeoForge handles file watching for config files; the command clears DoLogger's config cache and reloads the server-side language table from the currently loaded config.
@@ -139,14 +142,14 @@ Examples:
 
 ### `/dologger revert preview <filters>` / `confirm` / `cancel`
 
-Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes it newest-to-oldest across all matched eligible rows; cancel clears it. Successfully reverted source rows are marked as currently reverted in the database, clearing any prior restored marker so the same source row can be reverted/restored repeatedly. Inverse audit rows are linked back to the source rows.
+Previews and safely reverts matching block break/place history. Revert uses the same lookup filters, but requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview stores a pending plan for 60 seconds; confirm executes the saved plan newest-to-oldest; cancel clears it. Successfully reverted source rows are marked as currently reverted in the database, clearing any prior restored marker so the same source row can be reverted/restored repeatedly. Inverse audit rows are linked back to the source rows.
 
 Permission node: `dologger.revert`
 
 Safety limits:
 
 - Block-only MVP: no container, item, session, entity, chat, or command revert.
-- Preview includes all matched eligible block changes and confirm runs newest-first.
+- Preview includes up to `limit.<n>` matched eligible block changes, or `maxRevertRestorePlanSize` when no limit filter is provided, and confirm runs newest-first over the saved IDs.
 - Reverting a place removes the block only if the current block still matches the logged material.
 - Reverting a break restores only default block state, only into air, and skips block-entity blocks such as chests or signs.
 
@@ -155,20 +158,21 @@ Examples:
 ```text
 /dologger revert preview action.place_block user.SaltWood_233 radius.10 time.1h
 /dologger revert preview action.break_block include.stone radius.b
+/dologger revert preview action.place_block radius.10 time.1h limit.200
 /dologger revert confirm
 /dologger revert cancel
 ```
 
 ### `/dologger restore preview <filters>` / `confirm` / `cancel`
 
-Previews and safely restores currently reverted block break/place history. Restore requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview only includes source rows that are currently reverted; confirm executes oldest-to-newest across all matched eligible rows, marks successful source rows as restored, and clears the current revert marker so the same source row can be reverted/restored repeatedly. Command-generated audit rows are linked back to the original source rows and are not themselves selected for revert/restore.
+Previews and safely restores currently reverted block break/place history. Restore requires an explicit `action.` filter and only supports `action.break_block` and `action.place_block`. Preview only includes source rows that are currently reverted; confirm executes the saved plan oldest-to-newest, marks successful source rows as restored, and clears the current revert marker so the same source row can be reverted/restored repeatedly. Command-generated audit rows are linked back to the original source rows and are not themselves selected for revert/restore.
 
 Permission node: `dologger.restore`
 
 Safety limits:
 
 - Block-only MVP: no container, item, session, entity, chat, or command restore.
-- Preview includes all matched currently reverted block changes and confirm runs oldest-first.
+- Preview includes up to `limit.<n>` matched currently reverted block changes, or `maxRevertRestorePlanSize` when no limit filter is provided, and confirm runs oldest-first over the saved IDs.
 - Restoring an original place places the logged material back only into air.
 - Restoring an original break removes the block only if the current block still matches the logged material.
 - Restore conflicts instead of overwriting mismatched blocks.
@@ -178,6 +182,7 @@ Examples:
 ```text
 /dologger restore preview action.place_block user.SaltWood_233 radius.10 time.1h
 /dologger restore preview action.break_block include.stone radius.b
+/dologger restore preview action.break_block user.SaltWood_233 limit.50
 /dologger restore confirm
 /dologger restore cancel
 ```
@@ -278,6 +283,18 @@ Supported suffixes:
 - `d`: days
 - `y`: years
 
+### `limit`
+
+Caps revert/restore preview result size. Lookup commands ignore this filter; it is intended for destructive preview plans.
+
+```text
+limit.50
+limit.200
+limit.1000
+```
+
+When omitted, revert/restore preview uses `maxRevertRestorePlanSize`.
+
 ## Logged Activity
 
 DoLogger records these major categories:
@@ -292,7 +309,7 @@ DoLogger records these major categories:
 
 ## Notes
 
-- Database writes are queued asynchronously.
+- Database writes are queued asynchronously. The queue is bounded by `queueCapacity`; once it reaches `queueBusyThreshold`, new asynchronous writes are rejected and DoLogger reports the database queue as busy instead of growing memory without limit. Critical revert/restore finalization uses synchronous database transactions.
 - Lookup commands read from PostgreSQL synchronously.
 - Language output is resolved on the server from bundled language files instead of sending DoLogger translation keys to clients.
 - Bundled languages: `en_us`, `zh_cn`.
