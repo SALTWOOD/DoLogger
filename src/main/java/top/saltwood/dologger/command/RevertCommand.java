@@ -78,7 +78,7 @@ public final class RevertCommand {
             return 0;
         }
 
-        List<BlockHistory> history = services.block().getRevertCandidates(player.level(), filterList.toRepositoryParams());
+        List<BlockHistory> history = services.block().getRevertCandidates(player.level(), filterList.toBlockRepositoryParams());
         if (history.isEmpty()) {
             source.sendFailure(LanguageResolver.component("dologger.commands.revert.no_results"));
             return 0;

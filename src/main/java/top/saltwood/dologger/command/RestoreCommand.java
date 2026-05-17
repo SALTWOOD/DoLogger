@@ -78,7 +78,7 @@ public final class RestoreCommand {
             return 0;
         }
 
-        List<BlockHistory> history = services.block().getRestoreCandidates(player.level(), filterList.toRepositoryParams());
+        List<BlockHistory> history = services.block().getRestoreCandidates(player.level(), filterList.toBlockRepositoryParams());
         if (history.isEmpty()) {
             source.sendFailure(LanguageResolver.component("dologger.commands.restore.no_results"));
             return 0;

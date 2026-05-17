@@ -48,6 +48,34 @@ public class FilterList {
     }
 
     public List<Object> toRepositoryParams() {
+        return toBlockRepositoryParams();
+    }
+
+    public List<Object> toBlockRepositoryParams() {
+        return toRepositoryParams(ActionFamily.BLOCK, true);
+    }
+
+    public List<Object> toItemRepositoryParams() {
+        return toRepositoryParams(ActionFamily.ITEM, true);
+    }
+
+    public List<Object> toSessionRepositoryParams() {
+        return toRepositoryParams(ActionFamily.SESSION, false);
+    }
+
+    public List<Object> toChatRepositoryParams() {
+        return toRepositoryParams(ActionFamily.CHAT, false);
+    }
+
+    public List<Object> toCommandRepositoryParams() {
+        return toRepositoryParams(ActionFamily.COMMAND, false);
+    }
+
+    public boolean selects(ActionFamily family) {
+        return action == null || action.selects(family);
+    }
+
+    private List<Object> toRepositoryParams(ActionFamily family, boolean includeMaterialFilters) {
         List<Object> params = new ArrayList<>(12);
         params.add(user == null ? null : user.queryValue());
         params.add(time == null ? null : time.queryValue());
@@ -58,13 +86,11 @@ public class FilterList {
         params.add(radius == null ? null : radius.queryMaxYValue());
         params.add(radius == null ? null : radius.queryMinZValue());
         params.add(radius == null ? null : radius.queryMaxZValue());
-        params.add(action == null ? null : action.queryValue());
-        params.add(include == null ? null : include.queryValue());
-        params.add(exclude == null ? null : exclude.queryValue());
+        params.add(action == null ? null : action.queryValue(family));
+        if (includeMaterialFilters) {
+            params.add(include == null ? null : include.queryValue());
+            params.add(exclude == null ? null : exclude.queryValue());
+        }
         return params;
-    }
-
-    public List<Object> toSessionRepositoryParams() {
-        return toRepositoryParams().subList(0, 10);
     }
 }
