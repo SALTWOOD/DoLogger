@@ -61,11 +61,12 @@ public class BlockRepository {
             WHERE action = 2 AND level = (SELECT id FROM levels WHERE name = ?) AND x = ? AND y = ? AND z = ?
             """;
     private static final String SELECT_FILTERED = """
-            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, COALESCE(m.name, e.name) AS material, b.action, b.reverted_at, b.restored_at
             FROM blocks b
             JOIN users u ON b.user_id = u.id
             JOIN levels l ON b.level = l.id
-            JOIN materials m ON b.type = m.id
+            LEFT JOIN materials m ON b.action IN (0, 1, 2) AND b.type = m.id
+            LEFT JOIN entities e ON b.action IN (3, 4) AND b.type = e.id
             WHERE l.name = ?
             AND (? OR u.name = ANY(?::text[]) OR u.uuid IN (SELECT un.uuid FROM usernames un WHERE un.name = ANY(?::text[])))
             AND (? OR b.time >= ?)
@@ -74,8 +75,8 @@ public class BlockRepository {
             AND (? OR b.y BETWEEN ? AND ?)
             AND (? OR b.z BETWEEN ? AND ?)
             AND (? OR b.action = ANY(?::integer[]))
-            AND (? OR m.name = ANY(?::text[]))
-            AND (? OR NOT (m.name = ANY(?::text[])))
+            AND (? OR COALESCE(m.name, e.name) = ANY(?::text[]))
+            AND (? OR NOT (COALESCE(m.name, e.name) = ANY(?::text[])))
             ORDER BY b.time DESC LIMIT 1000
             """;
     private static final String SELECT_REVERT_CANDIDATES = """

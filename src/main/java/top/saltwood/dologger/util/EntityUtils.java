@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -57,13 +56,6 @@ public final class EntityUtils {
             }
         }
 
-        if (entity instanceof Mob mob) {
-            Entity target = mob.getTarget();
-            if (target != null) {
-                return resolveLogicalActor(target, seen);
-            }
-        }
-
         return new Actor(getCombinedUUID(entity), getCombinedName(entity));
     }
 
@@ -72,7 +64,7 @@ public final class EntityUtils {
     }
 
     public static String getCombinedName(Entity entity) {
-        return "Entity:" + entityName(entity).getPath();
+        return entityName(entity).toString();
     }
 
     public static boolean logBlockAction(@Nullable Entity source, Level level, BlockPos pos, Block block, BlockAction action) {
