@@ -96,6 +96,7 @@ Examples:
 /dologger lookup
 /dologger lookup user.SaltWood_233
 /dologger lookup action.break_block,place_block radius.10 time.1d
+/dologger lookup action.chat,command user.SaltWood_233 time.1h
 /dologger lookup include.stone,dirt exclude.bedrock radius.2c
 ```
 
@@ -215,6 +216,7 @@ action.interact_block
 action.kill_entity
 action.drop_item,pickup_item
 action.join,quit
+action.chat,command
 ```
 
 Supported action names include:
@@ -223,8 +225,10 @@ Supported action names include:
 break_block, place_block, interact_block, kill_entity, interact_entity
 remove_item, add_item, drop_item, pickup_item, craft_item, break_item
 consume_item, throw_item, shoot_item, add_item_ender, remove_item_ender
-join, quit
+join, quit, chat, command
 ```
+
+Chat and command history are first-class lookup results. Material `include` and `exclude` filters only apply to block, container, and item rows; chat, command, and session rows are selected by user, time, radius, and their `action.` family.
 
 ### `include` / `exclude`
 

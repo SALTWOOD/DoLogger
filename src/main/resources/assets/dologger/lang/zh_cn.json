@@ -72,5 +72,7 @@
   "dologger.action.add_item_ender.past": "放入末影箱",
   "dologger.action.remove_item_ender.past": "从末影箱取出",
   "dologger.action.join.past": "加入了游戏",
-  "dologger.action.quit.past": "离开了游戏"
+  "dologger.action.quit.past": "离开了游戏",
+  "dologger.action.chat.past": "说了",
+  "dologger.action.command.past": "执行了命令"
 }

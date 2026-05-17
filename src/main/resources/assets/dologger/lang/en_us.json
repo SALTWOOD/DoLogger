@@ -72,5 +72,7 @@
   "dologger.action.add_item_ender.past": "added to ender chest",
   "dologger.action.remove_item_ender.past": "removed from ender chest",
   "dologger.action.join.past": "joined",
-  "dologger.action.quit.past": "left"
+  "dologger.action.quit.past": "left",
+  "dologger.action.chat.past": "said",
+  "dologger.action.command.past": "ran command"
 }
