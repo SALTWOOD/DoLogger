@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import top.saltwood.dologger.Config;
 import top.saltwood.dologger.Dologger;
+import top.saltwood.dologger.command.filter.ActionFamily;
 import top.saltwood.dologger.command.filter.FilterList;
 import top.saltwood.dologger.command.filter.FilterParseException;
 import top.saltwood.dologger.command.filter.FilterParser;
@@ -64,11 +65,23 @@ public final class LookupCommand {
         }
 
         List<IHistory> history = new ArrayList<>();
-        List<Object> repositoryParams = filterList.toRepositoryParams();
-        history.addAll(services.block().getFilteredBlockHistory(player.level(), repositoryParams));
-        history.addAll(services.container().getFilteredContainerHistory(player.level(), repositoryParams));
-        history.addAll(services.item().getFilteredItemHistory(player.level(), repositoryParams));
-        history.addAll(services.session().getFilteredSessionHistory(player.level(), filterList.toSessionRepositoryParams()));
+        if (filterList.selects(ActionFamily.BLOCK)) {
+            history.addAll(services.block().getFilteredBlockHistory(player.level(), filterList.toBlockRepositoryParams()));
+        }
+        if (filterList.selects(ActionFamily.ITEM)) {
+            List<Object> itemParams = filterList.toItemRepositoryParams();
+            history.addAll(services.container().getFilteredContainerHistory(player.level(), itemParams));
+            history.addAll(services.item().getFilteredItemHistory(player.level(), itemParams));
+        }
+        if (filterList.selects(ActionFamily.SESSION)) {
+            history.addAll(services.session().getFilteredSessionHistory(player.level(), filterList.toSessionRepositoryParams()));
+        }
+        if (filterList.selects(ActionFamily.CHAT)) {
+            history.addAll(services.chat().getFilteredChatHistory(player.level(), filterList.toChatRepositoryParams()));
+        }
+        if (filterList.selects(ActionFamily.COMMAND)) {
+            history.addAll(services.command().getFilteredCommandHistory(player.level(), filterList.toCommandRepositoryParams()));
+        }
         history.sort(Comparator.comparingLong((IHistory entry) -> entry.getTime().time()).reversed());
 
         if (history.isEmpty()) {
