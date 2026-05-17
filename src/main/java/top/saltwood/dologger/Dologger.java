@@ -11,6 +11,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import top.saltwood.dologger.command.DoLoggerCommand;
 import top.saltwood.dologger.database.DatabaseManager;
@@ -25,10 +26,12 @@ import top.saltwood.dologger.event.item.ItemEvents;
 public class Dologger
 {
     public static final String MODID = "dologger";
+    private static final long RECONNECT_INTERVAL_MS = 30_000L;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static DatabaseManager databaseManager;
     private static SqlQueue sqlQueue;
     private static Services services;
+    private static long nextReconnectAttemptMillis;
     private final BlockEvents blockEvents = new BlockEvents();
     private final EntityEvents entityEvents = new EntityEvents();
     private final ItemEvents itemEvents = new ItemEvents();
@@ -62,10 +65,24 @@ public class Dologger
         databaseManager = new DatabaseManager();
         databaseManager.start();
 
-        if (databaseManager.isAvailable()) {
-            sqlQueue = new SqlQueue(databaseManager);
-            sqlQueue.start();
-            services = new Services();
+        initializeServicesIfAvailable();
+        nextReconnectAttemptMillis = System.currentTimeMillis() + RECONNECT_INTERVAL_MS;
+    }
+
+    @SubscribeEvent
+    public void onServerTick(ServerTickEvent.Post event) {
+        if (services != null || databaseManager == null || databaseManager.isAvailable() || !Config.enabled) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (now < nextReconnectAttemptMillis) {
+            return;
+        }
+
+        nextReconnectAttemptMillis = now + RECONNECT_INTERVAL_MS;
+        if (databaseManager.tryReconnect()) {
+            initializeServicesIfAvailable();
         }
     }
 
@@ -83,6 +100,17 @@ public class Dologger
             databaseManager.stop();
             databaseManager = null;
         }
+    }
+
+    private static void initializeServicesIfAvailable() {
+        if (databaseManager == null || !databaseManager.isAvailable() || sqlQueue != null || services != null) {
+            return;
+        }
+
+        sqlQueue = new SqlQueue(databaseManager);
+        sqlQueue.start();
+        services = new Services();
+        LOGGER.info("DoLogger: Database services initialized");
     }
 
     public static DatabaseManager getDatabaseManager()
