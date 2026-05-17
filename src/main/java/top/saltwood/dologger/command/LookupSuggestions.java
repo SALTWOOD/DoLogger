@@ -20,7 +20,7 @@ final class LookupSuggestions {
 
     static final SuggestionProvider<CommandSourceStack> FILTERS = LookupSuggestions::suggest;
 
-    private static final List<String> PREFIXES = List.of("action.", "user.", "include.", "exclude.", "radius.", "time.");
+    private static final List<String> PREFIXES = List.of("action.", "user.", "include.", "exclude.", "radius.", "time.", "limit.");
     private static final List<String> ACTIONS = List.of(
             "break_block", "place_block", "interact_block", "kill_entity", "interact_entity",
             "remove_item", "add_item", "drop_item", "pickup_item", "craft_item", "break_item",
@@ -28,6 +28,7 @@ final class LookupSuggestions {
             "join", "quit", "chat", "command");
     private static final List<String> RADII = List.of("radius.b", "radius.5", "radius.10", "radius.25", "radius.1c", "radius.2c");
     private static final List<String> TIMES = List.of("time.30m", "time.1h", "time.1d", "time.7d");
+    private static final List<String> LIMITS = List.of("limit.10", "limit.50", "limit.100", "limit.500", "limit.1000");
 
     private LookupSuggestions() {
     }
@@ -60,6 +61,7 @@ final class LookupSuggestions {
             case "include", "exclude" -> materialNames().map(valuePrefix::concat);
             case "radius" -> RADII.stream();
             case "time" -> TIMES.stream();
+            case "limit" -> LIMITS.stream();
             default -> Stream.empty();
         };
     }

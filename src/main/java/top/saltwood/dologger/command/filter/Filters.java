@@ -10,7 +10,8 @@ public enum Filters {
     INCLUDE("include"),
     EXCLUDE("exclude"),
     RADIUS("radius"),
-    TIME("time");
+    TIME("time"),
+    LIMIT("limit");
 
     private final String prefix;
 

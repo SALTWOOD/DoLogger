@@ -36,6 +36,7 @@ public final class FilterParser {
         private ActionFilter action;
         private IncludeFilter include;
         private ExcludeFilter exclude;
+        private LimitFilter limit;
 
         void set(Filters filter, String value, @Nullable BlockPos origin) throws FilterParseException {
             switch (filter) {
@@ -63,11 +64,15 @@ public final class FilterParser {
                     rejectDuplicate(exclude, filter);
                     exclude = ExcludeFilter.parse(value);
                 }
+                case LIMIT -> {
+                    rejectDuplicate(limit, filter);
+                    limit = LimitFilter.parse(value);
+                }
             }
         }
 
         FilterList build() {
-            return new FilterList(user, time, radius, action, include, exclude);
+            return new FilterList(user, time, radius, action, include, exclude, limit);
         }
 
         private static void rejectDuplicate(Object existing, Filters filter) throws FilterParseException {

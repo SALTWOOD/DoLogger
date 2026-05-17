@@ -13,14 +13,16 @@ public class FilterList {
     private final @Nullable ActionFilter action;
     private final @Nullable IncludeFilter include;
     private final @Nullable ExcludeFilter exclude;
+    private final @Nullable LimitFilter limit;
 
-    FilterList(@Nullable UserFilter user, @Nullable TimeFilter time, @Nullable RadiusFilter radius, @Nullable ActionFilter action, @Nullable IncludeFilter include, @Nullable ExcludeFilter exclude) {
+    FilterList(@Nullable UserFilter user, @Nullable TimeFilter time, @Nullable RadiusFilter radius, @Nullable ActionFilter action, @Nullable IncludeFilter include, @Nullable ExcludeFilter exclude, @Nullable LimitFilter limit) {
         this.user = user;
         this.time = time;
         this.radius = radius;
         this.action = action;
         this.include = include;
         this.exclude = exclude;
+        this.limit = limit;
     }
 
     public @Nullable UserFilter user() {
@@ -45,6 +47,10 @@ public class FilterList {
 
     public @Nullable ExcludeFilter exclude() {
         return exclude;
+    }
+
+    public @Nullable LimitFilter limit() {
+        return limit;
     }
 
     public List<Object> toRepositoryParams() {
@@ -76,7 +82,7 @@ public class FilterList {
     }
 
     private List<Object> toRepositoryParams(ActionFamily family, boolean includeMaterialFilters) {
-        List<Object> params = new ArrayList<>(12);
+        List<Object> params = new ArrayList<>(13);
         params.add(user == null ? null : user.queryValue());
         params.add(time == null ? null : time.queryValue());
         params.add(null);
@@ -91,6 +97,7 @@ public class FilterList {
             params.add(include == null ? null : include.queryValue());
             params.add(exclude == null ? null : exclude.queryValue());
         }
+        params.add(limit == null ? null : limit.queryValue());
         return params;
     }
 }

@@ -69,6 +69,10 @@ public class Config {
             .comment("Automatically delete history older than this many days on database startup; 0 disables purge")
             .defineInRange("purgeRetentionDays", 0, 0, 36500);
 
+    public static final ModConfigSpec.IntValue MAX_REVERT_RESTORE_PLAN_SIZE = BUILDER
+            .comment("Default maximum number of block changes captured by revert/restore preview when no limit filter is specified")
+            .defineInRange("maxRevertRestorePlanSize", 1000, 1, 100000);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
@@ -86,6 +90,7 @@ public class Config {
     public static int queueFlushTimeout;
     public static int pageSize;
     public static int purgeRetentionDays;
+    public static int maxRevertRestorePlanSize;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
@@ -108,6 +113,7 @@ public class Config {
         queueFlushTimeout = QUEUE_FLUSH_TIMEOUT.get();
         pageSize = PAGE_SIZE.get();
         purgeRetentionDays = PURGE_RETENTION_DAYS.get();
+        maxRevertRestorePlanSize = MAX_REVERT_RESTORE_PLAN_SIZE.get();
     }
 
     public static void reload() {

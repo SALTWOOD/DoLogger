@@ -184,11 +184,8 @@ public final class RestoreCommand {
         int success = 0;
         int skipped = 0;
         int conflict = 0;
-        Set<Integer> pending = new HashSet<>(entryIds);
         UUID batch = UUID.randomUUID();
-        List<BlockHistory> entries = services.block().getRestoreCandidates(level, null).stream()
-                .filter(entry -> pending.contains(entry.getId()))
-                .toList();
+        List<BlockHistory> entries = services.block().getRestoreCandidatesByIds(level, entryIds);
         for (BlockHistory entry : entries) {
             RestoreResult result = restoreEntry(services, player, level, entry, batch);
             switch (result) {
@@ -197,7 +194,7 @@ public final class RestoreCommand {
                 case CONFLICT -> conflict++;
             }
         }
-        conflict += pending.size() - entries.size();
+        conflict += entryIds.size() - entries.size();
         return new RestoreCounts(success, skipped, conflict);
     }
 

@@ -1,6 +1,7 @@
 package top.saltwood.dologger.database.repository;
 
 import top.saltwood.dologger.Dologger;
+import top.saltwood.dologger.Config;
 import top.saltwood.dologger.database.SchemaCreator;
 import top.saltwood.dologger.model.history.BlockHistory;
 import top.saltwood.dologger.model.action.BlockAction;
@@ -106,6 +107,7 @@ public class BlockRepository {
             AND (? OR m.name = ANY(?::text[]))
             AND (? OR NOT (m.name = ANY(?::text[])))
             ORDER BY b.time DESC, b.id DESC
+            LIMIT ?
             """;
     private static final String SELECT_RESTORE_CANDIDATES = """
             SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
@@ -127,6 +129,34 @@ public class BlockRepository {
             AND (? OR b.action = ANY(?::integer[]))
             AND (? OR m.name = ANY(?::text[]))
             AND (? OR NOT (m.name = ANY(?::text[])))
+            ORDER BY b.time ASC, b.id ASC
+            LIMIT ?
+            """;
+    private static final String SELECT_REVERT_CANDIDATES_BY_IDS = """
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
+            FROM blocks b
+            JOIN users u ON b.user_id = u.id
+            JOIN levels l ON b.level = l.id
+            JOIN materials m ON b.type = m.id
+            WHERE l.name = ?
+            AND b.id = ANY(?::integer[])
+            AND b.action IN (0, 1)
+            AND b.command_generated = false
+            AND (b.reverted_at IS NULL OR b.restored_at IS NOT NULL)
+            ORDER BY b.time DESC, b.id DESC
+            """;
+    private static final String SELECT_RESTORE_CANDIDATES_BY_IDS = """
+            SELECT b.id, b.time, u.name, u.uuid, b.x, b.y, b.z, m.name AS material, b.action, b.reverted_at, b.restored_at
+            FROM blocks b
+            JOIN users u ON b.user_id = u.id
+            JOIN levels l ON b.level = l.id
+            JOIN materials m ON b.type = m.id
+            WHERE l.name = ?
+            AND b.id = ANY(?::integer[])
+            AND b.action IN (0, 1)
+            AND b.command_generated = false
+            AND b.reverted_at IS NOT NULL
+            AND b.restored_at IS NULL
             ORDER BY b.time ASC, b.id ASC
             """;
     private static final String MARK_REVERTED = """
@@ -192,8 +222,16 @@ public class BlockRepository {
         return queryCandidates(SELECT_REVERT_CANDIDATES, levelName, filters);
     }
 
+    public List<BlockHistory> getRevertCandidatesByIds(String levelName, List<Integer> ids) throws SQLException {
+        return queryCandidatesByIds(SELECT_REVERT_CANDIDATES_BY_IDS, levelName, ids);
+    }
+
     public List<BlockHistory> getRestoreCandidates(String levelName, List<Object> filters) throws SQLException {
         return queryCandidates(SELECT_RESTORE_CANDIDATES, levelName, filters);
+    }
+
+    public List<BlockHistory> getRestoreCandidatesByIds(String levelName, List<Integer> ids) throws SQLException {
+        return queryCandidatesByIds(SELECT_RESTORE_CANDIDATES_BY_IDS, levelName, ids);
     }
 
     public boolean markReverted(int id, UUID actorUuid, long at, UUID batch) throws SQLException {
@@ -256,7 +294,7 @@ public class BlockRepository {
         }
     }
 
-    static void bindHistoryFilters(PreparedStatement stmt, int start, List<Object> filters, boolean includeMaterialFilters) throws SQLException {
+    static int bindHistoryFilters(PreparedStatement stmt, int start, List<Object> filters, boolean includeMaterialFilters) throws SQLException {
         int index = start;
         index = bindUserFilter(stmt, index, value(filters, 0));
         index = bindPair(stmt, index, value(filters, 1));
@@ -267,8 +305,9 @@ public class BlockRepository {
         index = bindIntArray(stmt, index, value(filters, 9));
         if (includeMaterialFilters) {
             index = bindTextArray(stmt, index, value(filters, 10));
-            bindTextArray(stmt, index, value(filters, 11));
+            index = bindTextArray(stmt, index, value(filters, 11));
         }
+        return index;
     }
 
     static void bindUserTimeRadiusFilters(PreparedStatement stmt, int start, List<Object> filters) throws SQLException {
@@ -363,11 +402,32 @@ public class BlockRepository {
         Connection conn = Dologger.getDatabaseManager().getConnection();
         try (conn; PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, levelName);
-            bindHistoryFilters(stmt, 2, filters, true);
+            int index = bindHistoryFilters(stmt, 2, filters, true);
+            stmt.setInt(index, candidateLimit(filters));
             try (ResultSet rs = stmt.executeQuery()) {
                 return mapBlockHistory(rs);
             }
         }
+    }
+
+    private static List<BlockHistory> queryCandidatesByIds(String sql, String levelName, List<Integer> ids) throws SQLException {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Connection conn = Dologger.getDatabaseManager().getConnection();
+        try (conn; PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, levelName);
+            Integer[] boxed = ids.toArray(Integer[]::new);
+            stmt.setArray(2, conn.createArrayOf("integer", boxed));
+            try (ResultSet rs = stmt.executeQuery()) {
+                return mapBlockHistory(rs);
+            }
+        }
+    }
+
+    private static int candidateLimit(List<Object> filters) {
+        Object value = value(filters, 12);
+        return value instanceof Integer limit ? limit : Config.maxRevertRestorePlanSize;
     }
 
     private static boolean mark(String sql, int id, UUID actorUuid, long at, UUID batch) throws SQLException {

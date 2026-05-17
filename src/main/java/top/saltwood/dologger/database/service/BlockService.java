@@ -128,6 +128,19 @@ public class BlockService {
         }
     }
 
+    public List<BlockHistory> getRevertCandidatesByIds(Level level, List<Integer> ids) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return blockRepository.getRevertCandidatesByIds(ServiceSupport.levelName(level), ids);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
+    }
+
     public List<BlockHistory> getRestoreCandidates(Level level, List<Object> filters) {
         if (!ServiceSupport.canRead()) {
             ServiceSupport.logUnavailable();
@@ -135,6 +148,19 @@ public class BlockService {
         }
         try {
             return blockRepository.getRestoreCandidates(ServiceSupport.levelName(level), filters);
+        } catch (SQLException exception) {
+            ServiceSupport.logSqlFailure(exception);
+            return List.of();
+        }
+    }
+
+    public List<BlockHistory> getRestoreCandidatesByIds(Level level, List<Integer> ids) {
+        if (!ServiceSupport.canRead()) {
+            ServiceSupport.logUnavailable();
+            return List.of();
+        }
+        try {
+            return blockRepository.getRestoreCandidatesByIds(ServiceSupport.levelName(level), ids);
         } catch (SQLException exception) {
             ServiceSupport.logSqlFailure(exception);
             return List.of();

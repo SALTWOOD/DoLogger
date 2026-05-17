@@ -184,11 +184,8 @@ public final class RevertCommand {
         int success = 0;
         int skipped = 0;
         int conflict = 0;
-        Set<Integer> pending = new HashSet<>(entryIds);
         UUID batch = UUID.randomUUID();
-        List<BlockHistory> entries = services.block().getRevertCandidates(level, null).stream()
-                .filter(entry -> pending.contains(entry.getId()))
-                .toList();
+        List<BlockHistory> entries = services.block().getRevertCandidatesByIds(level, entryIds);
         for (BlockHistory entry : entries) {
             RevertResult result = revertEntry(services, player, level, entry, batch);
             switch (result) {
@@ -197,7 +194,7 @@ public final class RevertCommand {
                 case CONFLICT -> conflict++;
             }
         }
-        conflict += pending.size() - entries.size();
+        conflict += entryIds.size() - entries.size();
         return new RevertCounts(success, skipped, conflict);
     }
 
