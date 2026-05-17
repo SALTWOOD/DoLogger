@@ -49,7 +49,21 @@ public class HistoryPurger {
     }
 
     private static int deleteOlderThan(Connection connection, String table, long cutoffMillis) throws SQLException {
+        if ("blocks".equals(table)) {
+            return deleteOldBlocks(connection, cutoffMillis);
+        }
         try (PreparedStatement statement = connection.prepareStatement("DELETE FROM " + table + " WHERE time < ?")) {
+            statement.setLong(1, cutoffMillis);
+            return statement.executeUpdate();
+        }
+    }
+
+    private static int deleteOldBlocks(Connection connection, long cutoffMillis) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                DELETE FROM blocks
+                WHERE time < ?
+                AND NOT (reverted_at IS NOT NULL AND restored_at IS NULL)
+                """)) {
             statement.setLong(1, cutoffMillis);
             return statement.executeUpdate();
         }

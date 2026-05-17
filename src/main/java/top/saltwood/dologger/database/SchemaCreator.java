@@ -210,7 +210,39 @@ public class SchemaCreator {
         stmt.execute("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS revert_batch uuid NULL");
         stmt.execute("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS restore_batch uuid NULL");
         stmt.execute("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS command_generated boolean NOT NULL DEFAULT false");
-        stmt.execute("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS source_block_id integer NULL REFERENCES blocks(id)");
+        stmt.execute("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS source_block_id integer NULL");
+        stmt.execute("""
+                DO $$
+                DECLARE
+                    constraint_name text;
+                    delete_action char;
+                BEGIN
+                    SELECT conname, confdeltype INTO constraint_name, delete_action
+                    FROM pg_constraint
+                    WHERE conrelid = 'blocks'::regclass
+                      AND contype = 'f'
+                      AND conkey = ARRAY[
+                          (
+                              SELECT attnum
+                              FROM pg_attribute
+                              WHERE attrelid = 'blocks'::regclass
+                                AND attname = 'source_block_id'
+                          )
+                      ];
+
+                    IF constraint_name IS NOT NULL AND delete_action <> 'n' THEN
+                        EXECUTE format('ALTER TABLE blocks DROP CONSTRAINT %I', constraint_name);
+                        constraint_name := NULL;
+                    END IF;
+
+                    IF constraint_name IS NULL THEN
+                        ALTER TABLE blocks
+                        ADD CONSTRAINT blocks_source_block_id_fkey
+                        FOREIGN KEY (source_block_id) REFERENCES blocks(id) ON DELETE SET NULL;
+                    END IF;
+                END
+                $$
+                """);
     }
 
     private static void createIndexes(Statement stmt) throws SQLException {
