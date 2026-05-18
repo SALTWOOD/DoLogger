@@ -27,7 +27,7 @@ final class LookupSuggestions {
             "consume_item", "throw_item", "shoot_item", "add_item_ender", "remove_item_ender",
             "join", "quit", "chat", "command");
     private static final List<String> RADII = List.of("radius.b", "radius.5", "radius.10", "radius.25", "radius.1c", "radius.2c");
-    private static final List<String> TIMES = List.of("time.30m", "time.1h", "time.1d", "time.7d");
+    private static final List<String> TIMES = List.of("time.30s", "time.30m", "time.1h", "time.1d", "time.7d", "time.>30m", "time.>1h", "time.>1d");
     private static final List<String> LIMITS = List.of("limit.10", "limit.50", "limit.100", "limit.500", "limit.1000");
 
     private LookupSuggestions() {

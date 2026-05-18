@@ -99,6 +99,7 @@ Examples:
 /dologger lookup
 /dologger lookup user.SaltWood_233
 /dologger lookup action.break_block,place_block radius.10 time.1d
+/dologger lookup action.chat,command user.SaltWood_233 time.30s
 /dologger lookup action.chat,command user.SaltWood_233 time.1h
 /dologger lookup include.stone,dirt exclude.bedrock radius.2c
 ```
@@ -267,21 +268,31 @@ Meaning:
 
 ### `time`
 
-Limits lookup results to recent history.
+Limits lookup results by time. By default, filters to recent history (newer than the given duration). Prefix with `>` to filter to older history instead.
 
 ```text
+time.30s
 time.30m
 time.1h
 time.7d
 time.1y
+time.>30m
+time.>1h
+time.>1d
 ```
 
 Supported suffixes:
 
+- `s`: seconds
 - `m`: minutes
 - `h`: hours
 - `d`: days
 - `y`: years
+
+The `>` prefix selects entries older than the given duration instead of newer:
+
+- `time.1h`: entries from the last hour (newer than 1 hour ago)
+- `time.>1h`: entries older than 1 hour ago
 
 ### `limit`
 

@@ -84,8 +84,8 @@ public class FilterList {
     private List<Object> toRepositoryParams(ActionFamily family, boolean includeMaterialFilters) {
         List<Object> params = new ArrayList<>(13);
         params.add(user == null ? null : user.queryValue());
-        params.add(time == null ? null : time.queryValue());
-        params.add(null);
+        params.add(time == null ? null : time.afterCutoffMillis());
+        params.add(time == null ? null : time.beforeCutoffMillis());
         params.add(radius == null ? null : radius.queryMinXValue());
         params.add(radius == null ? null : radius.queryMaxXValue());
         params.add(radius == null ? null : radius.queryMinYValue());
